@@ -1,0 +1,31 @@
+# Step 1: Build the app
+FROM node:22-slim AS build-image
+
+WORKDIR /app
+
+COPY . .
+
+# Accept env variable from build args
+ARG NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
+RUN npm install
+
+RUN npm run build
+
+# Step 2: Serve the app
+FROM node:22-slim AS run-image
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+WORKDIR /app
+
+COPY --from=build-image /app/package.json ./
+COPY --from=build-image /app/.next .next
+COPY --from=build-image /app/public public
+COPY --from=build-image /app/node_modules node_modules
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
