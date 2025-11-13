@@ -87,32 +87,39 @@ pip install -r requirements.txt
 
 cd ..\customer
 pip install -r requirements.txt
+
+cd ..\gateway
+pip install -r requirements.txt
 ```
 
 ---
 
 ### **Bước 5: Chạy Backend Services**
 
-**Mở 5 terminal riêng biệt:**
+**Mở 6 terminal riêng biệt (QUAN TRỌNG - phải chạy Gateway TRƯỚC):**
 
 ```powershell
-# Terminal 1 - User Service
+# Terminal 1 - API Gateway (CHẠY ĐẦU TIÊN - Port 8000)
+cd services\gateway
+python gateway.py
+
+# Terminal 2 - User Service
 cd services\user
 uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
-# Terminal 2 - Product Service
+# Terminal 3 - Product Service
 cd services\product
 uvicorn main:app --host 0.0.0.0 --port 8002 --reload
 
-# Terminal 3 - Order Service
+# Terminal 4 - Order Service
 cd services\order
 uvicorn main:app --host 0.0.0.0 --port 8003 --reload
 
-# Terminal 4 - Supplier Service
+# Terminal 5 - Supplier Service
 cd services\supplier
 uvicorn main:app --host 0.0.0.0 --port 8004 --reload
 
-# Terminal 5 - Customer Service
+# Terminal 6 - Customer Service
 cd services\customer
 uvicorn main:app --host 0.0.0.0 --port 8005 --reload
 ```
@@ -122,14 +129,20 @@ uvicorn main:app --host 0.0.0.0 --port 8005 --reload
 ### **Bước 6: Chạy Frontend (Next.js)**
 
 ```powershell
-# Mở terminal mới
+# Mở terminal mới (Terminal 7)
 cd client
 
-# Cài dependencies
+# Cài dependencies (nếu chưa cài)
 npm install
 
 # Chạy dev server
 npm run dev
+```
+
+Tạo file `.env.local` trong folder `/client` (nếu chưa có):
+
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
 
 Frontend sẽ chạy tại: **http://localhost:3000**
@@ -137,6 +150,9 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 ---
 
 ## 🔍 KIỂM TRA
+
+### API Gateway:
+- Gateway Health: http://localhost:8000/health
 
 ### Backend APIs:
 - User Service: http://localhost:8001/docs
@@ -155,6 +171,11 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 
 ## 🐛 XỬ LÝ LỖI
 
+**Lỗi "Failed to fetch" khi đăng ký/đăng nhập:**
+- **Nguyên nhân:** Thiếu API Gateway (port 8000)
+- **Giải pháp:** Chạy Gateway TRƯỚC các service khác (xem Bước 5)
+- **Kiểm tra:** Truy cập http://localhost:8000/health phải thấy `{"status":"ok"}`
+
 **Lỗi kết nối Redis:**
 - Kiểm tra endpoint và password Redis Cloud
 - Test connection: `redis-cli -h redis-19565.c292.ap-southeast-1-1.ec2.cloud.redislabs.com -p 19565 -a your_password`
@@ -171,7 +192,9 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 
 ## 📝 GHI CHÚ
 
-- **Backend services** phải chạy TRƯỚC khi start frontend
+- **API Gateway (port 8000)** phải chạy TRƯỚC và LUÔN LUÔN chạy
+- **Backend services** (port 8001-8005) chạy sau Gateway
 - **MinIO** phải chạy liên tục (giữ terminal mở)
-- Mỗi service cần 1 terminal riêng
+- **Frontend** gọi API qua Gateway (port 8000), không gọi trực tiếp tới services
+- Tổng cộng cần **7 terminals**: 1 MinIO + 1 Gateway + 5 Services + 1 Frontend
 - Nếu dùng Docker sau này, chỉ cần `docker-compose up`
