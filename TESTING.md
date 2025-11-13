@@ -136,18 +136,12 @@ GET http://localhost:8000/api/order/get-all-orders
 ## 🔐 TÀI KHOẢN MẶC ĐỊNH (Nếu đã chạy init script)
 
 ```
-Username: admin
+Email: admin@admin.com
 Password: admin123
 Role: Admin
-
-Username: manager
-Password: manager123
-Role: Manager
-
-Username: staff
-Password: staff123
-Role: Staff
 ```
+
+**Lưu ý:** Sau khi cập nhật password hash, bạn cần chạy lại file `init-db2.sql` trong MySQL để cập nhật database.
 
 ---
 

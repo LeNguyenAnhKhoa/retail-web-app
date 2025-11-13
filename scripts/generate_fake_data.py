@@ -98,7 +98,7 @@ for _ in range(NUM_WAREHOUSES):
 # Users
 admin_created_time = generate_realistic_date(months_back=24, growth_pattern=False)  # Admin user created early
 sql_statements.append(f"INSERT INTO users (username, email, password_hash, role_name, warehouse_id, is_active, image_url, created_time, updated_time) "
-                      f"VALUES ('admin', 'admin@admin.com', '$2b$12$MhPoat8o/LgpoL2spnBagetd5YPqa1HwP6dzRpGg4O1PQ8mwMLQSy', 'admin', 1, TRUE, 'https://api.dicebear.com/9.x/identicon/svg?seed=admin', '{admin_created_time}', '{admin_created_time}');")
+                      f"VALUES ('admin', 'admin@admin.com', '$2b$12$U6z/AEf/CUUoZpnX7oh8Ouh79r4lUwbeQq52MurCTpSDuxUB.LYkK', 'admin', 1, TRUE, 'https://api.dicebear.com/9.x/identicon/svg?seed=admin', '{admin_created_time}', '{admin_created_time}');")
 
 # Customers
 for _ in range(NUM_CUSTOMERS):
