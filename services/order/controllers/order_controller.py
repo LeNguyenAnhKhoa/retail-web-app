@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from shared_utils.database import Database
 from queries.order_queries import OrderQueries
-from models.order import OrderResponse, OrderData, OrderItemData, Order, OrderItem
+from models.order import OrderResponse, OrderCreateData, OrderDetailData, Order, OrderDetail
 from typing import Dict, List
 from shared_utils.logger import logger
 from shared_config.custom_exception import BadRequestException, NotFoundException
@@ -49,12 +49,9 @@ class OrderController:
         return order_data
 
     def get_all_orders(self, user_info, search=None):
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
-        if not warehouse_id:
-            raise BadRequestException("Warehouse ID is required to retrieve orders")
-        if role_name not in ["admin", "staff"]:
-            raise BadRequestException("Only admin and staff can retrieve orders")
+        role_name = user_info.get("role_name", "").lower()
+        if role_name not in ["admin", "staff", "manager", "stockkeeper"]:
+            raise BadRequestException("Only admin, manager, staff, and stockkeeper can retrieve orders")
         
         # Handle search parameter - extract number from ORD-1000 format
         search_param = None
@@ -64,139 +61,78 @@ class OrderController:
             else:
                 search_param = f"%{search}%"
         
-        if role_name == "admin":
-            if search_param:
-                result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS_WITH_SEARCH, (search_param, search_param))
-            else:
-                result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS)
-            self.db.close_pool()
-            if result is None:
-                raise Exception("Failed to retrieve orders from the database")
-            
-            orders = []
-            for row in result:
-                order_data = {
-                    "order_id": row[0],
-                    "order_date": row[1],
-                    "order_status": row[2],
-                    "customer_id": row[3],
-                    "customer_name": row[4],
-                    "customer_email": row[5],
-                    "customer_phone": row[6],
-                    "warehouse_id": row[7],
-                    "warehouse_name": row[8],
-                    "total_items": row[9],
-                    "total_order_value": row[10],
-                    "unique_products_ordered": row[11],
-                }
-                if orders and orders[-1].get("order_id") == order_data.get("order_id"):
-                    continue
-                orders.append(order_data)
-            return orders
-            
+        # All roles can see all orders since there's only one warehouse
+        if search_param:
+            result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS_WITH_SEARCH, (search_param, search_param))
+        else:
+            result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS)
+        self.db.close_pool()
+        if result is None:
+            raise Exception("Failed to retrieve orders from the database")
         
-        if role_name == "staff":
-            if search_param:
-                result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS_BY_WAREHOUSE_WITH_SEARCH, (warehouse_id, search_param, search_param))
-            else:
-                result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS_BY_WAREHOUSE, (warehouse_id,))
-            self.db.close_pool()
-            if result is None:
-                raise Exception("Failed to retrieve orders from the database")
-            
-            orders = []
-            for row in result:
-                order_data = {
-                    "order_id": row[0],
-                    "order_date": row[1],
-                    "order_status": row[2],
-                    "customer_id": row[3],
-                    "customer_name": row[4],
-                    "customer_email": row[5],
-                    "customer_phone": row[6],
-                    "warehouse_id": row[7],
-                    "warehouse_name": row[8],
-                    "total_items": row[9],
-                    "total_order_value": row[10],
-                    "unique_products_ordered": row[11],
-                }
-                if orders and orders[-1].get("order_id") == order_data.get("order_id"):
-                    continue
-                orders.append(order_data)
-            return orders
-    
-        return []
+        orders = []
+        for row in result:
+            order_data = {
+                "order_id": row[0],
+                "order_code": row[1],
+                "customer_id": row[2],
+                "customer_name": row[3],
+                "customer_phone": row[4],
+                "user_id": row[5],
+                "staff_name": row[6],
+                "staff_role": row[7],
+                "total_amount": row[8],
+                "payment_method": row[9],
+                "status": row[10],
+                "total_items": row[11],
+                "total_quantity": row[12],
+                "total_profit": row[13],
+                "created_at": row[14],
+                "updated_at": row[15],
+            }
+            if orders and orders[-1].get("order_id") == order_data.get("order_id"):
+                continue
+            orders.append(order_data)
+        return orders
 
     def get_order(self, order_id: int, user_info: dict):
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
+        role_name = user_info.get("role_name", "").lower()
         
-        if not warehouse_id or not role_name:
-            raise BadRequestException("Warehouse ID and Role Name are required")
+        if not role_name:
+            raise BadRequestException("Role Name is required")
 
-        if role_name not in ["admin", "staff"]:
-            raise BadRequestException("Only admin and staff can retrieve orders")
+        if role_name not in ["admin", "staff", "manager", "stockkeeper"]:
+            raise BadRequestException("Only admin, manager, staff, and stockkeeper can retrieve orders")
         
-        order_date = {}
-        if role_name == "staff":
-            result = self.db.execute_query(OrderQueries.GET_ORDER_DETAIL_BY_WAREHOUSE, (order_id, warehouse_id))
-            logger.info(f"Got result from database: {bool(result)}")
-            if not result:
-                raise NotFoundException(f"Cannot found order with ID {order_id}")
-            order_data = {
-                "order_id": result[0][0],
-                "order_date": result[0][1],
-                "order_status": result[0][2],
-                "customer_id": result[0][3],
-                "customer_name": result[0][4],
-                "customer_email": result[0][5],
-                "customer_phone": result[0][6],
-                "items": [],
-                "total_items": 0,
-                "total_price": 0
+        # All roles can see all orders since there's only one warehouse
+        result = self.db.execute_query(OrderQueries.GET_ORDER_DETAIL, (order_id,))
+        logger.info(f"Got result from database: {bool(result)}")
+        if not result:
+            raise NotFoundException(f"Cannot found order with ID {order_id}")
+        order_data = {
+            "order_id": result[0][0],
+            "order_date": result[0][1],
+            "order_status": result[0][2],
+            "customer_id": result[0][3],
+            "customer_name": result[0][4],
+            "customer_email": result[0][5],
+            "customer_phone": result[0][6],
+            "items": [],
+            "total_items": 0,
+            "total_price": 0
+        }
+        for row in result:
+            item = {
+                "order_item_id": row[7],
+                "product_id": row[8],
+                "product_name": row[9],
+                "product_price": row[10],
+                "quantity_ordered": row[11],
+                "price": row[12]
             }
-            for row in result:
-                item = {
-                    "order_item_id": row[7],
-                    "product_id": row[8],
-                    "product_name": row[9],
-                    "product_price": row[10],
-                    "quantity_ordered": row[11],
-                    "price": row[12]
-                }
-                order_data["items"].append(item)
-                order_data["total_items"] += 1
-                order_data["total_price"] += item["price"]
-
-        if role_name == "admin":
-            result = self.db.execute_query(OrderQueries.GET_ORDER_DETAIL, (order_id,))
-            logger.info(f"Got result from database: {bool(result)}")
-            if not result:
-                raise NotFoundException(f"Cannot found order with ID {order_id}")
-            order_data = {
-                "order_id": result[0][0],
-                "order_date": result[0][1],
-                "order_status": result[0][2],
-                "customer_id": result[0][3],
-                "customer_name": result[0][4],
-                "customer_email": result[0][5],
-                "customer_phone": result[0][6],
-                "items": [],
-                "total_items": 0,
-                "total_price": 0
-            }
-            for row in result:
-                item = {
-                    "order_item_id": row[7],
-                    "product_id": row[8],
-                    "product_name": row[9],
-                    "product_price": row[10],
-                    "quantity_ordered": row[11],
-                    "price": row[12]
-                }
-                order_data["items"].append(item)
-                order_data["total_items"] += 1
-                order_data["total_price"] += item["price"]
+            order_data["items"].append(item)
+            order_data["total_items"] += 1
+            order_data["total_price"] += item["price"]
         if order_data and order_data.get("order_id") is None:
             return {}
         return order_data
@@ -234,7 +170,7 @@ class OrderController:
         return {}
       
 
-    def update_order(self, order_id: int, order: OrderData):
+    def update_order(self, order_id: int, order: OrderCreateData):
         result = self.db.execute_query(OrderQueries.GET_ORDER_BY_ID, (order_id,))
         if not result:
             raise NotFoundException(f"Order with ID {order_id} not found")
@@ -340,19 +276,19 @@ class OrderController:
         return f"Order {order_id} status updated to {status}"
 
     def get_recent_completed_orders(self, user_info):
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
+        user_id = user_info.get("user_id")
+        role_name = user_info.get("role_name", "").lower()
         
-        if not warehouse_id:
-            raise BadRequestException("Warehouse ID is required to retrieve orders")
-        if role_name not in ["admin", "staff"]:
-            raise BadRequestException("Only admin and staff can retrieve orders")
+        if not user_id:
+            raise BadRequestException("User ID is required to retrieve orders")
+        if role_name not in ["admin", "staff", "manager", "stockkeeper"]:
+            raise BadRequestException("Only admin, manager, staff, and stockkeeper can retrieve orders")
         
-        # Admin can see all recent completed orders, staff only sees their warehouse
-        if role_name == "admin":
+        # Admin/Manager can see all recent completed orders, staff/stockkeeper only sees their own orders
+        if role_name in ("admin", "manager"):
             result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS)
-        else:  # staff
-            result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS_BY_WAREHOUSE, (warehouse_id,))
+        else:  # staff, stockkeeper
+            result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS_BY_USER, (user_id,))
         
         self.db.close_pool()
         
@@ -363,9 +299,9 @@ class OrderController:
         for row in result:
             order_data = {
                 "order_id": row[0],
-                "customer_name": row[1],
+                "customer_name": row[1] if row[1] else "Khách vãng lai",
                 "total_order_value": float(row[2]) if row[2] else 0.0,
-                "order_date": row[3]
+                "order_date": row[3].strftime('%Y-%m-%d') if row[3] else None
             }
             orders.append(order_data)
         

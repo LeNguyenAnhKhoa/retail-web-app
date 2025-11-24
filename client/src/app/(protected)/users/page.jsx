@@ -7,7 +7,6 @@ import withAuth from "@/hooks/withAuth";
 
 function UsersPage() {
   const [users, setUsers] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
 
@@ -48,42 +47,6 @@ function UsersPage() {
       }
     };
 
-    const fetchWarehouses = async () => {
-      try {
-        const access_token = localStorage.getItem("access_token");
-
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get-all-warehouses`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `${access_token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          setError("Failed to fetch warehouses");
-          setShowAlert(true);
-          setTimeout(() => {
-            setShowAlert(false);
-          }, 3000);
-          return;
-        }
-
-        const data = await response.json();
-        setWarehouses(data?.data || []);
-      } catch (error) {
-        setError("Error fetching warehouses");
-        setShowAlert(true);
-        setTimeout(() => {
-          setShowAlert(false);
-        }, 3000);
-      }
-    };
-    fetchWarehouses();
     fetchUsers();
   }, []);
 
@@ -108,7 +71,6 @@ function UsersPage() {
         <UsersTable
           users={users}
           totalUsers={users.length}
-          warehouses={warehouses}
           setError={setError}
           setShowAlert={setShowAlert}
         />
@@ -116,7 +78,6 @@ function UsersPage() {
       <TabsContent value="active">
         <UsersTable
           users={users.filter((user) => user.is_active)}
-          warehouses={warehouses}
           totalUsers={users.filter((user) => user.is_active).length}
           setError={setError}
           setShowAlert={setShowAlert}
@@ -125,7 +86,6 @@ function UsersPage() {
       <TabsContent value="inactive">
         <UsersTable
           users={users.filter((user) => !user.is_active)}
-          warehouses={warehouses}
           totalUsers={users.filter((user) => !user.is_active).length}
           setError={setError}
           setShowAlert={setShowAlert}

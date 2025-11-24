@@ -24,15 +24,18 @@ class RegisterQuery:
     def create_user(self, payload: RegisterModel):
         query = """
             INSERT INTO
-                users (email, password_hash, username, image_url)
-            VALUES (%s, %s, %s, %s)
+                users (username, email, password_hash, full_name, phone, role, image_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         # dicebear 
         random_image_url = "https://api.dicebear.com/9.x/identicon/svg?seed=" + payload.username
         params = (
+            payload.username,
             payload.email,
             payload.password,
-            payload.username,
+            payload.username,  # Use username as full_name for now
+            "",  # Empty phone for now
+            "STAFF",  # Default role
             random_image_url
         )
         result = self.db.execute_query(query, params)

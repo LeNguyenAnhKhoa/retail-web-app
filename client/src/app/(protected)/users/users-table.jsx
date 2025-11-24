@@ -23,7 +23,6 @@ import { useState } from "react";
 export function UsersTable({
   users,
   totalUsers,
-  warehouses,
   setError,
   setShowAlert,
 }) {
@@ -62,9 +61,6 @@ export function UsersTable({
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden md:table-cell">Role</TableHead>
               <TableHead className="hidden md:table-cell">Status</TableHead>
-              <TableHead className="hidden md:table-cell">
-                Warehouse Name
-              </TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -75,7 +71,6 @@ export function UsersTable({
               <User
                 key={user.user_id}
                 user={user}
-                warehouses={warehouses}
                 setError={setError}
                 setShowAlert={setShowAlert}
               />

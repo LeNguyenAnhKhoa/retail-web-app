@@ -8,70 +8,39 @@ class DashboardStatsQuery:
     def close(self):
         self.db.close_pool()
         
-    def get_revenue_stats(self, warehouse_id=None):
+    def get_revenue_stats(self):
         """Get total revenue and month-over-month change"""
         # Get current month and previous month dates
         now = datetime.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         previous_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
         
-        if warehouse_id:
-            # Staff - get revenue for specific warehouse
-            query = """
-            SELECT
-                -- Current month revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s AND o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS current_month_revenue,
-                
-                -- Previous month revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s AND o.order_date < %s AND o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS previous_month_revenue,
-                
-                -- Total revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS total_revenue
-            FROM order_summary_view osv
-            JOIN orders o ON osv.order_id = o.order_id
-            WHERE osv.warehouse_id = %s
-            """
-            params = (current_month_start, previous_month_start, current_month_start, warehouse_id)
-        else:
-            # Admin - get revenue for all warehouses
-            query = """
-            SELECT
-                -- Current month revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s AND o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS current_month_revenue,
-                
-                -- Previous month revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s AND o.order_date < %s AND o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS previous_month_revenue,
-                
-                -- Total revenue
-                COALESCE(SUM(CASE 
-                    WHEN o.status = 'completed' 
-                    THEN osv.total_order_value 
-                    ELSE 0 
-                END), 0) AS total_revenue
-            FROM order_summary_view osv
-            JOIN orders o ON osv.order_id = o.order_id
-            """
-            params = (current_month_start, previous_month_start, current_month_start)
+        # Get revenue for all orders
+        query = """
+        SELECT
+            -- Current month revenue
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s AND status = 'COMPLETED' 
+                THEN total_amount 
+                ELSE 0 
+            END), 0) AS current_month_revenue,
+            
+            -- Previous month revenue
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s AND created_at < %s AND status = 'COMPLETED' 
+                THEN total_amount 
+                ELSE 0 
+            END), 0) AS previous_month_revenue,
+            
+            -- Total revenue
+            COALESCE(SUM(CASE 
+                WHEN status = 'COMPLETED' 
+                THEN total_amount 
+                ELSE 0 
+            END), 0) AS total_revenue
+        FROM orders
+        """
+        params = (current_month_start, previous_month_start, current_month_start)
             
         result = self.db.execute_query(query, params)
         if not result:
@@ -100,59 +69,34 @@ class DashboardStatsQuery:
             'month_over_month_change': round(month_over_month_change, 2)
         }
     
-    def get_products_stats(self, warehouse_id=None):
+    def get_products_stats(self):
         """Get total products count and month-over-month change"""
         now = datetime.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         previous_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
         
-        if warehouse_id:
-            # Staff - get products for specific warehouse
-            query = """
-            SELECT
-                -- Total products
-                COUNT(*) AS total_products,
-                
-                -- Products created this month
-                COALESCE(SUM(CASE 
-                    WHEN created_time >= %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS current_month_products,
-                
-                -- Products created previous month
-                COALESCE(SUM(CASE 
-                    WHEN created_time >= %s AND created_time < %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS previous_month_products
-            FROM products
-            WHERE warehouse_id = %s
-            """
-            params = (current_month_start, previous_month_start, current_month_start, warehouse_id)
-        else:
-            # Admin - get products for all warehouses
-            query = """
-            SELECT
-                -- Total products
-                COUNT(*) AS total_products,
-                
-                -- Products created this month
-                COALESCE(SUM(CASE 
-                    WHEN created_time >= %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS current_month_products,
-                
-                -- Products created previous month
-                COALESCE(SUM(CASE 
-                    WHEN created_time >= %s AND created_time < %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS previous_month_products
-            FROM products
-            """
-            params = (current_month_start, previous_month_start, current_month_start)
+        # Get products for all
+        query = """
+        SELECT
+            -- Total products
+            COUNT(*) AS total_products,
+            
+            -- Products created this month
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s 
+                THEN 1 
+                ELSE 0 
+            END), 0) AS current_month_products,
+            
+            -- Products created previous month
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s AND created_at < %s 
+                THEN 1 
+                ELSE 0 
+            END), 0) AS previous_month_products
+        FROM products
+        """
+        params = (current_month_start, previous_month_start, current_month_start)
             
         result = self.db.execute_query(query, params)
         if not result:
@@ -181,60 +125,34 @@ class DashboardStatsQuery:
             'month_over_month_change': round(month_over_month_change, 2)
         }
     
-    def get_orders_stats(self, warehouse_id=None):
+    def get_orders_stats(self):
         """Get total orders count and month-over-month change"""
         now = datetime.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         previous_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
         
-        if warehouse_id:
-            # Staff - get orders for specific warehouse
-            query = """
-            SELECT
-                -- Total orders
-                COUNT(DISTINCT osv.order_id) AS total_orders,
-                
-                -- Orders created this month
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS current_month_orders,
-                
-                -- Orders created previous month
-                COALESCE(SUM(CASE 
-                    WHEN o.order_date >= %s AND o.order_date < %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS previous_month_orders
-            FROM order_summary_view osv
-            JOIN orders o ON osv.order_id = o.order_id
-            WHERE osv.warehouse_id = %s
-            """
-            params = (current_month_start, previous_month_start, current_month_start, warehouse_id)
-        else:
-            # Admin - get orders for all warehouses
-            query = """
-            SELECT
-                -- Total orders
-                COUNT(*) AS total_orders,
-                
-                -- Orders created this month
-                COALESCE(SUM(CASE 
-                    WHEN order_date >= %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS current_month_orders,
-                
-                -- Orders created previous month
-                COALESCE(SUM(CASE 
-                    WHEN order_date >= %s AND order_date < %s 
-                    THEN 1 
-                    ELSE 0 
-                END), 0) AS previous_month_orders
-            FROM orders
-            """
-            params = (current_month_start, previous_month_start, current_month_start)
+        # Get orders for all
+        query = """
+        SELECT
+            -- Total orders
+            COUNT(*) AS total_orders,
+            
+            -- Orders created this month
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s 
+                THEN 1 
+                ELSE 0 
+            END), 0) AS current_month_orders,
+            
+            -- Orders created previous month
+            COALESCE(SUM(CASE 
+                WHEN created_at >= %s AND created_at < %s 
+                THEN 1 
+                ELSE 0 
+            END), 0) AS previous_month_orders
+        FROM orders
+        """
+        params = (current_month_start, previous_month_start, current_month_start)
             
         result = self.db.execute_query(query, params)
         if not result:
@@ -277,14 +195,14 @@ class DashboardStatsQuery:
             
             -- Customers created this month
             COALESCE(SUM(CASE 
-                WHEN created_time >= %s 
+                WHEN created_at >= %s 
                 THEN 1 
                 ELSE 0 
             END), 0) AS current_month_customers,
             
             -- Customers created previous month
             COALESCE(SUM(CASE 
-                WHEN created_time >= %s AND created_time < %s 
+                WHEN created_at >= %s AND created_at < %s 
                 THEN 1 
                 ELSE 0 
             END), 0) AS previous_month_customers

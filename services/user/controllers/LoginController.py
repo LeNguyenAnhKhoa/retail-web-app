@@ -55,11 +55,6 @@ class LoginController:
             self.query.close()
             raise InvalidDataException("Account is inactive. Please contact admin.")
         
-        # Check if the user is staff but was not assigned to a warehouse
-        if user.get("role_name") == "staff" and not user.get("warehouse_id"):
-            self.query.close()
-            raise InvalidDataException("User is not assigned to a warehouse")
-        
         # If the password is correct
         # Generate JWT token
         # Generate refresh token
@@ -86,7 +81,6 @@ class LoginController:
         jwt_payload ={
             "user_id": user.get("user_id"),
             "role_name": user.get("role_name"),
-            "warehouse_id": user.get("warehouse_id"),
             "email": user.get("email"),
         }
         access_token = sign_token(jwt_payload)
@@ -99,7 +93,6 @@ class LoginController:
             "user": {
                 "user_id": user.get("user_id"),
                 "role_name": user.get("role_name"),
-                "warehouse_id": user.get("warehouse_id"),
                 "email": user.get("email"),
             }
         }

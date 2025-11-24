@@ -1,24 +1,12 @@
 class OrderQueries:
     GET_ALL_ORDERS = """
         SELECT * FROM order_summary_view
-        ORDER BY order_date DESC, order_id ASC;
-    """
-    
-    GET_ALL_ORDERS_BY_WAREHOUSE = """
-        SELECT * FROM order_summary_view
-        WHERE warehouse_id = %s
-        ORDER BY order_date DESC, order_id ASC;
+        ORDER BY created_at DESC, order_id ASC;
     """
 
     GET_ORDER_DETAIL = """
         SELECT * FROM order_detail_summary
         WHERE order_id = %s
-        ORDER BY order_updated_time DESC, order_id ASC;
-    """
-    
-    GET_ORDER_DETAIL_BY_WAREHOUSE = """
-        SELECT * FROM order_detail_summary
-        WHERE order_id = %s AND warehouse_id = %s
         ORDER BY order_updated_time DESC, order_id ASC;
     """
 
@@ -84,13 +72,7 @@ class OrderQueries:
     GET_ALL_ORDERS_WITH_SEARCH = """
         SELECT * FROM order_summary_view
         WHERE CAST(order_id AS CHAR) LIKE %s OR customer_name LIKE %s
-        ORDER BY order_date DESC, order_id ASC;
-    """
-    
-    GET_ALL_ORDERS_BY_WAREHOUSE_WITH_SEARCH = """
-        SELECT * FROM order_summary_view
-        WHERE warehouse_id = %s AND (CAST(order_id AS CHAR) LIKE %s OR customer_name LIKE %s)
-        ORDER BY order_date DESC, order_id ASC;
+        ORDER BY created_at DESC, order_id ASC;
     """
     
     GET_ORDER_BY_ID = """
@@ -106,32 +88,25 @@ class OrderQueries:
     """
     
     GET_RECENT_COMPLETED_ORDERS = """
-        SELECT * FROM order_summary_view
-        WHERE order_status = 'completed'
-        ORDER BY order_date DESC, order_id ASC
-        LIMIT 5;
-    """
-    
-    GET_RECENT_COMPLETED_ORDERS_BY_WAREHOUSE = """
         SELECT 
             order_id,
             customer_name,
-            total_order_value,
-            order_date 
-        FROM order_summary_view
-        WHERE warehouse_id = %s AND status = 'completed'
-        ORDER BY order_date DESC, order_id ASC
-        LIMIT 5;
-    """
-    
-    GET_RECENT_COMPLETED_ORDERS = """
-        SELECT 
-            order_id,
-            customer_name,
-            total_order_value,
-            order_date
+            total_amount,
+            created_at
         FROM order_summary_view 
-        WHERE status = 'completed'
-        ORDER BY order_date DESC 
+        WHERE UPPER(status) = 'COMPLETED'
+        ORDER BY created_at DESC 
+        LIMIT 5;
+    """
+    
+    GET_RECENT_COMPLETED_ORDERS_BY_USER = """
+        SELECT 
+            order_id,
+            customer_name,
+            total_amount,
+            created_at
+        FROM order_summary_view
+        WHERE user_id = %s AND UPPER(status) = 'COMPLETED'
+        ORDER BY created_at DESC
         LIMIT 5;
     """

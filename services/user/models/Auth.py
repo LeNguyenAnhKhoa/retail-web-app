@@ -5,8 +5,8 @@ class LoginModel(BaseModel):
     password: str = Field(..., title="Password", description="User's password")
     
     class Config:
-        orm_mode = False
-        schema_extra = {
+        from_attributes = False
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "password": "string",
@@ -19,8 +19,8 @@ class RegisterModel(BaseModel):
     username: str = Field(..., title="Username", description="User's username")
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "password": "string",
@@ -33,8 +33,8 @@ class LogoutModel(BaseModel):
     refresh_token: str = Field(..., title="Refresh Token", description="Refresh token for the user session")
     
     class Config:
-        orm_mode = False
-        schema_extra = {
+        from_attributes = False
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "refresh_token": "string",
@@ -46,8 +46,8 @@ class TokensModel(BaseModel):
     refresh_token: str = Field(..., title="Refresh Token", description="Refresh token")
     
     class Config:
-        orm_mode = False
-        schema_extra = {
+        from_attributes = False
+        json_schema_extra = {
             "example": {
                 "access_token": "string",
                 "refresh_token": "string",
@@ -61,8 +61,8 @@ class LoginLogModel(BaseModel):
     user_agent: str = Field(..., title="User Agent", description="User agent of the user's device")
     
     class Config:
-        orm_mode = False
-        schema_extra = {
+        from_attributes = False
+        json_schema_extra = {
             "example": {
                 "user_id": 1,
                 "refresh_token": "string",

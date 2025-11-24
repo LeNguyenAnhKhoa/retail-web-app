@@ -157,11 +157,6 @@ export function Order({ order, onClick, setError, setShowAlert, onStatusUpdate }
           </span>
         </div>
       </TableCell>
-      <TableCell className="hidden md:table-cell">
-        <div className="text-sm">
-          {order.warehouse_name || "N/A"}
-        </div>
-      </TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

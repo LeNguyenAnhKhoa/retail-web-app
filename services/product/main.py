@@ -50,3 +50,7 @@ async def http_exception_handler(request: Request, exc: CustomException):
             "data": {}
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8002)

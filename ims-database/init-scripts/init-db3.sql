@@ -1,193 +1,203 @@
--- Supplier view
-CREATE OR REPLACE VIEW supplier_products_view AS
+-- Views for new schema
+
+-- Product view with category and created_by info
+CREATE OR REPLACE VIEW product_summary_view AS
 SELECT 
-    w.warehouse_id,
-    w.name AS warehouse_name,
-    s.supplier_id,
-    s.name AS supplier_name,
-    s.contact_name,
-    s.contact_email,
-    s.phone AS contact_phone,
     p.product_id,
+    p.code,
     p.name AS product_name,
-    p.description,
-    p.price,
-    p.quantity,
-    c.category_id,
+    p.category_id,
     c.name AS category_name,
-    p.created_time AS product_created_time,
-    p.updated_time AS product_updated_time
+    p.unit,
+    p.import_price,
+    p.selling_price,
+    p.stock_quantity,
+    p.image_url,
+    p.is_active,
+    p.description,
+    p.created_by,
+    u.full_name AS created_by_name,
+    u.role AS created_by_role,
+    p.created_at,
+    p.updated_at
 FROM 
-    suppliers s
-    LEFT JOIN products p ON s.supplier_id = p.supplier_id
-    LEFT JOIN warehouses w ON p.warehouse_id = w.warehouse_id
-    LEFT JOIN categories c ON p.category_id = c.category_id;
+    products p
+    INNER JOIN categories c ON p.category_id = c.category_id
+    INNER JOIN users u ON p.created_by = u.user_id;
 
-CREATE OR REPLACE VIEW all_suppliers_by_warehouse_view AS
+-- Supplier view
+CREATE OR REPLACE VIEW supplier_summary_view AS
 SELECT 
-    w.warehouse_id,
-    w.name AS warehouse_name,
     s.supplier_id,
     s.name AS supplier_name,
     s.contact_name,
-    s.contact_email,
     s.phone,
-    COALESCE(COUNT(p.product_id), 0) AS total_products,
-    COALESCE(SUM(p.quantity), 0) AS total_product_quantity,
-    COALESCE(AVG(p.price), 0) AS avg_product_price,
-    MIN(p.created_time) AS earliest_product_created,
-    MAX(p.updated_time) AS latest_product_updated,
-    s.created_time AS supplier_created_time,
-    s.updated_time AS supplier_updated_time
+    s.address,
+    s.email,
+    COUNT(DISTINCT it.ticket_id) AS total_import_tickets,
+    COALESCE(SUM(itd.quantity * itd.price), 0) AS total_import_value,
+    s.created_at,
+    s.updated_at
 FROM 
     suppliers s
-    LEFT JOIN products p ON s.supplier_id = p.supplier_id
-    LEFT JOIN warehouses w ON p.warehouse_id = w.warehouse_id
+    LEFT JOIN inventory_tickets it ON s.supplier_id = it.supplier_id AND it.type = 'IMPORT'
+    LEFT JOIN inventory_ticket_details itd ON it.ticket_id = itd.ticket_id
 GROUP BY 
-    w.warehouse_id,
-    w.name,
-    s.supplier_id,
-    s.name,
-    s.contact_name,
-    s.contact_email,
-    s.phone,
-    s.created_time,
-    s.updated_time;
+    s.supplier_id, s.name, s.contact_name, s.phone, s.address, s.email, s.created_at, s.updated_at;
 
--- Customer view
+-- Customer view with purchase history
 CREATE OR REPLACE VIEW customer_summary_view AS
 SELECT 
-    c.customer_id AS customer_id,
-    c.name AS name,
-    c.email AS email,
-    c.phone AS phone,
-    c.address AS address,
-    c.updated_time AS customer_updated_time,
-    COUNT(DISTINCT CASE WHEN poi.product_id IS NOT NULL THEN o.order_id END) AS total_number_orders,
-    COALESCE(SUM(poi.total_price), 0) AS total_spent,
-    MAX(CASE WHEN poi.product_id IS NOT NULL THEN o.order_date END) AS last_purchase
+    c.customer_id,
+    c.name AS customer_name,
+    c.phone,
+    c.address,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    COALESCE(SUM(o.total_amount), 0) AS total_spent,
+    MAX(o.created_at) AS last_purchase,
+    c.created_at,
+    c.updated_at
 FROM 
     customers c
     LEFT JOIN orders o ON c.customer_id = o.customer_id
-    LEFT JOIN order_items oi ON o.order_id = oi.order_id
-    LEFT JOIN product_order_items poi ON oi.order_item_id = poi.order_item_id
 GROUP BY 
-    c.customer_id, c.name, c.email, c.phone, c.updated_time;
+    c.customer_id, c.name, c.phone, c.address, c.created_at, c.updated_at;
 
--- Order view
+-- Order view with details
 CREATE OR REPLACE VIEW order_summary_view AS
 SELECT 
     o.order_id,
-    o.order_date,
-    o.status,
-    c.customer_id,
+    o.code AS order_code,
+    o.customer_id,
     c.name AS customer_name,
-    c.email AS customer_email,
     c.phone AS customer_phone,
-    p.warehouse_id,
-    w.name AS warehouse_name,
-    SUM(poi.quantity) AS total_items,
-    SUM(poi.total_price) AS total_order_value,
-    COUNT(DISTINCT poi.product_id) AS unique_products_ordered
-FROM
+    o.user_id,
+    u.full_name AS staff_name,
+    u.role AS staff_role,
+    o.total_amount,
+    o.payment_method,
+    o.status,
+    COUNT(DISTINCT od.id) AS total_items,
+    SUM(od.quantity) AS total_quantity,
+    SUM(od.quantity * (od.unit_price - od.cost_price)) AS total_profit,
+    o.created_at,
+    o.updated_at
+FROM 
     orders o
     LEFT JOIN customers c ON o.customer_id = c.customer_id
-    LEFT JOIN order_items oi ON o.order_id = oi.order_id
-    LEFT JOIN product_order_items poi ON oi.order_item_id = poi.order_item_id
-    LEFT JOIN products p ON poi.product_id = p.product_id
-    LEFT JOIN warehouses w ON p.warehouse_id = w.warehouse_id
-WHERE
-    p.product_id IS NOT NULL
-GROUP BY
-    o.order_id,
-    o.order_date,
-    o.status,
-    c.customer_id,
-    c.name,
-    c.email,
-    c.phone,
-    p.warehouse_id,
-    w.name;
+    INNER JOIN users u ON o.user_id = u.user_id
+    LEFT JOIN order_details od ON o.order_id = od.order_id
+GROUP BY 
+    o.order_id, o.code, o.customer_id, c.name, c.phone, 
+    o.user_id, u.full_name, u.role, o.total_amount, o.payment_method, 
+    o.status, o.created_at, o.updated_at;
 
+-- Inventory ticket view
+CREATE OR REPLACE VIEW inventory_ticket_summary_view AS
+SELECT 
+    it.ticket_id,
+    it.code AS ticket_code,
+    it.type AS ticket_type,
+    it.supplier_id,
+    s.name AS supplier_name,
+    it.user_id,
+    u.full_name AS created_by_name,
+    u.role AS created_by_role,
+    it.note,
+    COUNT(DISTINCT itd.id) AS total_items,
+    SUM(itd.quantity) AS total_quantity,
+    COALESCE(SUM(itd.quantity * itd.price), 0) AS total_value,
+    it.created_at,
+    it.updated_at
+FROM 
+    inventory_tickets it
+    LEFT JOIN suppliers s ON it.supplier_id = s.supplier_id
+    INNER JOIN users u ON it.user_id = u.user_id
+    LEFT JOIN inventory_ticket_details itd ON it.ticket_id = itd.ticket_id
+GROUP BY 
+    it.ticket_id, it.code, it.type, it.supplier_id, s.name, 
+    it.user_id, u.full_name, u.role, it.note, it.created_at, it.updated_at;
+
+-- Stock movement view
+CREATE OR REPLACE VIEW stock_movement_view AS
+SELECT 
+    p.product_id,
+    p.code AS product_code,
+    p.name AS product_name,
+    p.stock_quantity AS current_stock,
+    COALESCE(SUM(CASE WHEN it.type = 'IMPORT' THEN itd.quantity ELSE 0 END), 0) AS total_imported,
+    COALESCE(SUM(CASE WHEN it.type = 'EXPORT_CANCEL' THEN ABS(itd.quantity) ELSE 0 END), 0) AS total_exported,
+    COALESCE(SUM(CASE WHEN it.type = 'STOCK_CHECK' THEN itd.quantity ELSE 0 END), 0) AS total_adjusted,
+    COALESCE(SUM(od.quantity), 0) AS total_sold
+FROM 
+    products p
+    LEFT JOIN inventory_ticket_details itd ON p.product_id = itd.product_id
+    LEFT JOIN inventory_tickets it ON itd.ticket_id = it.ticket_id
+    LEFT JOIN order_details od ON p.product_id = od.product_id
+GROUP BY 
+    p.product_id, p.code, p.name, p.stock_quantity;
+
+-- Sales report view (for revenue and profit)
+CREATE OR REPLACE VIEW sales_report_view AS
+SELECT 
+    DATE(o.created_at) AS sale_date,
+    COUNT(DISTINCT o.order_id) AS total_orders,
+    SUM(o.total_amount) AS total_revenue,
+    SUM(od.quantity * od.cost_price) AS total_cost,
+    SUM(od.quantity * (od.unit_price - od.cost_price)) AS total_profit,
+    AVG(o.total_amount) AS avg_order_value
+FROM 
+    orders o
+    INNER JOIN order_details od ON o.order_id = od.order_id
+WHERE 
+    o.status = 'COMPLETED'
+GROUP BY 
+    DATE(o.created_at);
+
+-- Order detail view (for order detail page)
 CREATE OR REPLACE VIEW order_detail_summary AS
 SELECT
     o.order_id,
-    o.order_date,
+    o.created_at AS order_date,
     o.status AS order_status,
-
     c.customer_id,
     c.name AS customer_name,
-    c.email AS customer_email,
+    '' AS customer_email,
     c.phone AS customer_phone,
-
-    oi.order_item_id,
-
+    od.id AS order_item_id,
     p.product_id,
     p.name AS product_name,
-    p.price AS product_price,
-    poi.quantity AS quantity_ordered,
-    poi.total_price AS total_price,
-    
-    w.warehouse_id,
-    w.name AS warehouse_name,
-
-    o.created_time AS order_created_time,
-    o.updated_time AS order_updated_time
+    od.unit_price AS product_price,
+    od.quantity AS quantity_ordered,
+    (od.quantity * od.unit_price) AS total_price,
+    o.created_at AS order_created_time,
+    o.updated_at AS order_updated_time
 FROM
     orders o
-    JOIN customers c ON o.customer_id = c.customer_id
-    JOIN order_items oi ON o.order_id = oi.order_id
-    JOIN product_order_items poi ON oi.order_item_id = poi.order_item_id
-    JOIN products p ON poi.product_id = p.product_id
-    JOIN warehouses w ON p.warehouse_id = w.warehouse_id;
+    LEFT JOIN customers c ON o.customer_id = c.customer_id
+    INNER JOIN order_details od ON o.order_id = od.order_id
+    INNER JOIN products p ON od.product_id = p.product_id;
 
--- Product view
-CREATE OR REPLACE VIEW product_summary AS
+-- Best selling products view
+CREATE OR REPLACE VIEW best_selling_products_view AS
 SELECT 
-    p.product_id, 
-    p.name, 
-    p.description, 
-    p.price, 
-    p.image_url,
-    p.quantity,
-    c.category_id AS category_id,
-    c.name AS category_name,
-    s.supplier_id AS supplier_id,
-    s.name AS supplier_name,
-    w.warehouse_id AS warehouse_id,
-    w.name AS warehouse_name
-FROM products p
-JOIN categories c ON p.category_id = c.category_id
-JOIN suppliers s ON p.supplier_id = s.supplier_id
-JOIN warehouses w ON p.warehouse_id = w.warehouse_id
-ORDER BY p.updated_time DESC, product_id ASC;
-
--- User Activity View
--- Purpose: Tracks user login activity by combining users and login logs data
-CREATE OR REPLACE VIEW user_activity AS
-SELECT
-    u.user_id,
-    u.username,
-    u.email,
-    u.role_name,
-    w.name AS warehouse_name,
-    ll.login_time,
-    ll.ip_address,
-    ll.user_agent
-FROM users u
-LEFT JOIN login_logs ll ON u.user_id = ll.user_id
-LEFT JOIN warehouses w ON u.warehouse_id = w.warehouse_id;
-
--- Low Stock Alert View
--- Purpose: Identifies products with low inventory for restocking decisions
-CREATE OR REPLACE VIEW low_stock_alert AS
-SELECT
     p.product_id,
+    p.code,
     p.name AS product_name,
-    p.quantity,
-    w.name AS warehouse_name,
-    s.name AS supplier_name
-FROM products p
-JOIN warehouses w ON p.warehouse_id = w.warehouse_id
-JOIN suppliers s ON p.supplier_id = s.supplier_id
-WHERE p.quantity < 10;
+    c.name AS category_name,
+    COUNT(DISTINCT od.order_id) AS times_ordered,
+    SUM(od.quantity) AS total_quantity_sold,
+    SUM(od.quantity * od.unit_price) AS total_revenue,
+    SUM(od.quantity * (od.unit_price - od.cost_price)) AS total_profit,
+    AVG(od.unit_price) AS avg_selling_price
+FROM 
+    products p
+    INNER JOIN categories c ON p.category_id = c.category_id
+    INNER JOIN order_details od ON p.product_id = od.product_id
+    INNER JOIN orders o ON od.order_id = o.order_id
+WHERE 
+    o.status = 'COMPLETED'
+GROUP BY 
+    p.product_id, p.code, p.name, c.name
+ORDER BY 
+    total_quantity_sold DESC;

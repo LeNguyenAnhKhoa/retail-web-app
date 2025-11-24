@@ -1,9 +1,10 @@
-# 🚀 SETUP NHANH - IMS PROJECT
+# 🚀 RETAIL WEB APP - INVENTORY MANAGEMENT SYSTEM
 
 ## 📋 Yêu cầu đã có sẵn
-- ✅ Docker Desktop
-- ✅ Node.js & Next.js
-- ✅ MySQL (local)
+- ✅ Docker Desktop (optional)
+- ✅ Node.js & Next.js (v18+)
+- ✅ Python 3.8+
+- ✅ MySQL 8.0+ (local)
 - ✅ Redis Cloud (đã có endpoint)
 
 ## ⚡ CÀI ĐẶT & CHẠY
@@ -88,6 +89,9 @@ pip install -r requirements.txt
 cd ..\customer
 pip install -r requirements.txt
 
+cd ..\inventory
+pip install -r requirements.txt
+
 cd ..\gateway
 pip install -r requirements.txt
 ```
@@ -96,40 +100,46 @@ pip install -r requirements.txt
 
 ### **Bước 5: Chạy Backend Services**
 
-**Mở 6 terminal riêng biệt (QUAN TRỌNG - phải chạy Gateway TRƯỚC):**
+**Mở 7 terminal riêng biệt (QUAN TRỌNG - phải chạy Gateway TRƯỚC):**
 
 ```powershell
 # Terminal 1 - API Gateway (CHẠY ĐẦU TIÊN - Port 8000)
 cd services\gateway
 python gateway.py
 
-# Terminal 2 - User Service
+# Terminal 2 - User Service (Port 8001)
 cd services\user
-uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+python main.py
 
-# Terminal 3 - Product Service
+# Terminal 3 - Product Service (Port 8002)
 cd services\product
-uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+python main.py
 
-# Terminal 4 - Order Service
+# Terminal 4 - Order Service (Port 8003)
 cd services\order
-uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+python main.py
 
-# Terminal 5 - Supplier Service
-cd services\supplier
-uvicorn main:app --host 0.0.0.0 --port 8004 --reload
-
-# Terminal 6 - Customer Service
+# Terminal 5 - Customer Service (Port 8004)
 cd services\customer
-uvicorn main:app --host 0.0.0.0 --port 8005 --reload
+python main.py
+
+# Terminal 6 - Supplier Service (Port 8005)
+cd services\supplier
+python main.py
+
+# Terminal 7 - Inventory Service (Port 8007)
+cd services\inventory
+python main.py
 ```
+
+> **Lưu ý:** Mỗi service đã có uvicorn runner trong main.py, không cần gọi uvicorn trực tiếp.
 
 ---
 
 ### **Bước 6: Chạy Frontend (Next.js)**
 
 ```powershell
-# Mở terminal mới (Terminal 7)
+# Mở terminal mới (Terminal 8)
 cd client
 
 # Cài dependencies (nếu chưa cài)
@@ -149,6 +159,29 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 
 ---
 
+## 👤 TÀI KHOẢN MẪU
+
+Hệ thống đã tạo sẵn 3 tài khoản để test với các vai trò khác nhau:
+
+### 1. MANAGER (Quản lý)
+- **Email:** `admin@example.com`
+- **Password:** `Admin123`
+- **Quyền:** Toàn quyền - quản lý user, xem báo cáo, duyệt phiếu kho, quản lý toàn bộ hệ thống
+
+### 2. STAFF (Nhân viên bán hàng)
+- **Email:** `staff1@example.com`
+- **Password:** `Staff123`
+- **Quyền:** Bán hàng, quản lý đơn hàng, quản lý khách hàng, xem sản phẩm
+
+### 3. STOCKKEEPER (Thủ kho)
+- **Email:** `stock1@example.com`
+- **Password:** `Stock123`
+- **Quyền:** Quản lý kho, nhập/xuất/kiểm kê hàng, quản lý nhà cung cấp
+
+> **Lưu ý:** Đây là tài khoản demo, nên đổi password sau khi deploy production!
+
+---
+
 ## 🔍 KIỂM TRA
 
 ### API Gateway:
@@ -158,8 +191,9 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 - User Service: http://localhost:8001/docs
 - Product Service: http://localhost:8002/docs
 - Order Service: http://localhost:8003/docs
-- Supplier Service: http://localhost:8004/docs
-- Customer Service: http://localhost:8005/docs
+- Customer Service: http://localhost:8004/docs
+- Supplier Service: http://localhost:8005/docs
+- Inventory Service: http://localhost:8007/docs
 
 ### MinIO Console:
 - http://localhost:9001
@@ -193,8 +227,69 @@ Frontend sẽ chạy tại: **http://localhost:3000**
 ## 📝 GHI CHÚ
 
 - **API Gateway (port 8000)** phải chạy TRƯỚC và LUÔN LUÔN chạy
-- **Backend services** (port 8001-8005) chạy sau Gateway
+- **Backend services** (port 8001-8007) chạy sau Gateway
 - **MinIO** phải chạy liên tục (giữ terminal mở)
 - **Frontend** gọi API qua Gateway (port 8000), không gọi trực tiếp tới services
-- Tổng cộng cần **7 terminals**: 1 MinIO + 1 Gateway + 5 Services + 1 Frontend
+- Tổng cộng cần **9 terminals**: 1 MinIO + 1 Gateway + 6 Services + 1 Frontend
 - Nếu dùng Docker sau này, chỉ cần `docker-compose up`
+
+---
+
+## 🏗️ KIẾN TRÚC HỆ THỐNG
+
+### Database Schema (9 bảng chính):
+1. **users** - Quản lý người dùng (MANAGER, STAFF, STOCKKEEPER)
+2. **categories** - Danh mục sản phẩm
+3. **suppliers** - Nhà cung cấp
+4. **products** - Sản phẩm (code, unit, import_price, selling_price, stock_quantity)
+5. **customers** - Khách hàng
+6. **orders** - Đơn hàng bán
+7. **order_details** - Chi tiết đơn hàng
+8. **inventory_tickets** - Phiếu nhập/xuất/kiểm kê kho
+9. **inventory_ticket_details** - Chi tiết phiếu kho
+
+### Microservices (6 services):
+1. **User Service (8001)** - Xác thực, quản lý user, dashboard stats
+2. **Product Service (8002)** - Quản lý sản phẩm và danh mục
+3. **Order Service (8003)** - Quản lý đơn hàng bán
+4. **Customer Service (8004)** - Quản lý khách hàng
+5. **Supplier Service (8005)** - Quản lý nhà cung cấp
+6. **Inventory Service (8007)** - Quản lý phiếu nhập/xuất/kiểm kê kho
+
+### Roles & Permissions:
+- **MANAGER** - Toàn quyền (quản lý user, xem báo cáo, duyệt phiếu kho)
+- **STAFF** - Bán hàng, quản lý đơn hàng, khách hàng
+- **STOCKKEEPER** - Quản lý kho, nhập/xuất/kiểm kê
+
+### Key Features:
+- ✅ JWT Authentication với Redis caching
+- ✅ RBAC (Role-Based Access Control)
+- ✅ Real-time inventory tracking
+- ✅ Stored procedures for complex operations
+- ✅ Database views for reporting
+- ✅ MinIO for file storage
+- ✅ Pydantic V2 models
+
+---
+
+## 🔄 THAY ĐỔI MỚI NHẤT
+
+### Database Changes:
+- ❌ Removed: `warehouses` table (simplified to single warehouse)
+- ✅ Added: `inventory_tickets` và `inventory_ticket_details` tables
+- ✅ Updated: All tables use `created_at/updated_at` (thay vì created_time/updated_time)
+- ✅ Added: Role ENUM (MANAGER, STAFF, STOCKKEEPER) trong users table
+- ✅ Added: 8 database views for reporting
+- ✅ Added: Stored procedures (CreateOrderWithDetails, CreateInventoryTicketWithDetails)
+
+### New Service:
+- ✅ **Inventory Service** - Quản lý phiếu kho với 3 loại:
+  - **IMPORT**: Nhập hàng từ nhà cung cấp
+  - **EXPORT_CANCEL**: Xuất hủy hàng hỏng/lỗi
+  - **STOCK_CHECK**: Kiểm kê điều chỉnh tồn kho
+
+### Code Updates:
+- ✅ All Pydantic models migrated to V2 (orm_mode → from_attributes)
+- ✅ All services have uvicorn runner in main.py
+- ✅ RBAC middleware implemented in shared/rbac.py
+- ✅ Database utility classes standardized across services

@@ -1,90 +1,102 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class ProductCreateModel(BaseModel):
+    code: str = Field(..., title="Product Code", description="Unique code/SKU for the product")
     name: str = Field(..., title="Product Name", description="Name of the product")
-    description: str = Field(None, title="Product Description", description="Description of the product")
-    price: float = Field(..., title="Product Price", description="Price of the product")
-    quantity: int = Field(..., title="Product Quantity", description="Total quantity of the product")
-    image_url: str = Field(None, title="Product Image URL", description="URL of the product image")
     category_id: int = Field(..., title="Category ID", description="ID of the category")
-    supplier_id: int = Field(..., title="Supplier ID", description="ID of the supplier")
-    warehouse_id: int = Field(..., title="Warehouse ID", description="ID of the warehouse")
+    unit: str = Field(..., title="Unit", description="Unit of measurement (Hộp, Lon, Gói, etc.)")
+    import_price: float = Field(..., title="Import Price", description="Import/cost price")
+    selling_price: float = Field(..., title="Selling Price", description="Selling price")
+    stock_quantity: int = Field(0, title="Stock Quantity", description="Current stock quantity")
+    image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
+    created_by: int = Field(..., title="Created By", description="User ID who created this product")
+    is_active: bool = Field(True, title="Is Active", description="Whether product is active")
+    description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
-                "name": "Sample Product",
-                "description": "This is a sample product.",
-                "price": 19.99,
-                "quantity": 10,
-                "image_url": "http://example.com/image.jpg",
+                "code": "CC001",
+                "name": "Coca Cola 330ml",
                 "category_id": 1,
-                "supplier_id": 1,
-                "warehouse_id": 1
+                "unit": "Lon",
+                "import_price": 6000,
+                "selling_price": 8000,
+                "stock_quantity": 100,
+                "image_url": "http://example.com/coca.jpg",
+                "created_by": 3,
+                "is_active": True,
+                "description": "Nước ngọt Coca Cola lon 330ml"
             }
         }
         
 class ProductUpdateModel(BaseModel):
     product_id: int = Field(..., title="Product ID", description="Unique identifier for the product")
-    name: str = Field(None, title="Product Name", description="Name of the product")
-    description: str = Field(None, title="Product Description", description="Description of the product")
-    price: float = Field(None, title="Product Price", description="Price of the product")
-    quantity: int = Field(None, title="Product Quantity", description="Total quantity of the product")
-    image_url: str = Field(None, title="Product Image URL", description="URL of the product image")
-    category_id: int = Field(None, title="Category ID", description="ID of the category")
-    supplier_id: int = Field(None, title="Supplier ID", description="ID of the supplier")
-    warehouse_id: int = Field(None, title="Warehouse ID", description="ID of the warehouse")
+    code: Optional[str] = Field(None, title="Product Code", description="Unique code/SKU")
+    name: Optional[str] = Field(None, title="Product Name", description="Name of the product")
+    category_id: Optional[int] = Field(None, title="Category ID", description="ID of the category")
+    unit: Optional[str] = Field(None, title="Unit", description="Unit of measurement")
+    import_price: Optional[float] = Field(None, title="Import Price", description="Import/cost price")
+    selling_price: Optional[float] = Field(None, title="Selling Price", description="Selling price")
+    stock_quantity: Optional[int] = Field(None, title="Stock Quantity", description="Current stock quantity")
+    image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
+    is_active: Optional[bool] = Field(None, title="Is Active", description="Whether product is active")
+    description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "product_id": 1,
-                "name": "Updated Product",
-                "description": "This is an updated product.",
-                "price": 29.99,
-                "quantity": 5,
-                "image_url": "http://example.com/updated_image.jpg",
+                "code": "CC001",
+                "name": "Coca Cola 330ml",
                 "category_id": 1,
-                "supplier_id": 1,
-                "warehouse_id": 1
+                "unit": "Lon",
+                "import_price": 6000,
+                "selling_price": 8000,
+                "stock_quantity": 100,
+                "image_url": "http://example.com/coca.jpg",
+                "is_active": True,
+                "description": "Nước ngọt Coca Cola lon 330ml"
             }
         }
 
 class ProductModel(BaseModel):
     product_id: int = Field(..., title="Product ID", description="Unique identifier for the product")
+    code: str = Field(..., title="Product Code", description="Unique code/SKU")
     name: str = Field(..., title="Product Name", description="Name of the product")
-    description: str = Field(None, title="Product Description", description="Description of the product")
-    price: float = Field(..., title="Product Price", description="Price of the product")
-    quantity: int = Field(..., title="Product Quantity", description="Total quantity of the product")
-    image_url: str = Field(None, title="Product Image URL", description="URL of the product image")
-    category: dict = Field(..., title="Category", description="Category information")
-    supplier: dict = Field(..., title="Supplier", description="Supplier information")
-    warehouse: dict = Field(..., title="Warehouse", description="Warehouse information")
+    category_id: int = Field(..., title="Category ID", description="ID of the category")
+    category_name: str = Field(..., title="Category Name", description="Name of the category")
+    unit: str = Field(..., title="Unit", description="Unit of measurement")
+    import_price: float = Field(..., title="Import Price", description="Import/cost price")
+    selling_price: float = Field(..., title="Selling Price", description="Selling price")
+    stock_quantity: int = Field(..., title="Stock Quantity", description="Current stock quantity")
+    image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
+    created_by: int = Field(..., title="Created By", description="User ID who created")
+    created_by_name: Optional[str] = Field(None, title="Created By Name", description="Name of user who created")
+    is_active: bool = Field(..., title="Is Active", description="Whether product is active")
+    description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "product_id": 1,
-                "name": "Sample Product",
-                "description": "This is a sample product.",
-                "price": 19.99,
-                "quantity": 0,
-                "image_url": "http://example.com/image.jpg",
-                "category": {
-                    "category_id": 1,
-                    "name": "Electronics"
-                },
-                "supplier": {
-                    "supplier_id": 1,
-                    "name": "ABC Suppliers"
-                },
-                "warehouse": {
-                    "warehouse_id": 1,
-                    "name": "Warehouse A"
-                }
+                "code": "CC001",
+                "name": "Coca Cola 330ml",
+                "category_id": 1,
+                "category_name": "Nước ngọt",
+                "unit": "Lon",
+                "import_price": 6000,
+                "selling_price": 8000,
+                "stock_quantity": 100,
+                "image_url": "http://example.com/coca.jpg",
+                "created_by": 3,
+                "created_by_name": "Nguyen Van A",
+                "is_active": True,
+                "description": "Nước ngọt Coca Cola lon 330ml"
             }
         }
         
@@ -92,29 +104,25 @@ class ProductListModel(BaseModel):
     products: list[ProductModel] = Field(..., title="List of Products", description="List of products")
     
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "products": [
                     {
                         "product_id": 1,
-                        "name": "Sample Product",
-                        "description": "This is a sample product.",
-                        "price": 19.99,
-                        "quantity": 0,
-                        "image_url": "http://example.com/image.jpg",
-                        "category": {
-                            "category_id": 1,
-                            "name": "Electronics"
-                        },
-                        "supplier": {
-                            "supplier_id": 1,
-                            "name": "ABC Suppliers"
-                        },
-                        "warehouse": {
-                            "warehouse_id": 1,
-                            "name": "Warehouse A"
-                        }
+                        "code": "CC001",
+                        "name": "Coca Cola 330ml",
+                        "category_id": 1,
+                        "category_name": "Nước ngọt",
+                        "unit": "Lon",
+                        "import_price": 6000,
+                        "selling_price": 8000,
+                        "stock_quantity": 100,
+                        "image_url": "http://example.com/coca.jpg",
+                        "created_by": 3,
+                        "created_by_name": "Nguyen Van A",
+                        "is_active": True,
+                        "description": "Nước ngọt Coca Cola lon 330ml"
                     }
                 ]
             }

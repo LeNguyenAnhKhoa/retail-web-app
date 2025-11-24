@@ -8,7 +8,8 @@ class GetAllUsersController:
         """
         Execute the GetAllUsersQuery and return the result.
         """
-        if user_info.get("role_name") != "admin":
+        role_name = user_info.get("role_name", "").lower()
+        if role_name not in ("admin", "manager"):
             return []
         result = self.query.get_all_users()
         self.query.close()

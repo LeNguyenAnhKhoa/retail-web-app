@@ -18,7 +18,6 @@ function ProductsPageContent() {
   const [offset, setOffset] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [categories, setCategories] = useState([]);
-  const [warehouses, setWarehouses] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [user, setUser] = useState(null);
   const limit = 100;
@@ -101,23 +100,6 @@ function ProductsPageContent() {
           const categoriesData = await categoriesRes.json();
           setCategories(categoriesData?.data || []);
         }
-        // Fetch warehouses
-        const warehousesRes = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get-all-warehouses`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `${access_token}`,
-            },
-          }
-        );
-        if (warehousesRes.ok) {
-          const warehousesData = await warehousesRes.json();
-          setWarehouses(Array.isArray(warehousesData?.data) ? warehousesData?.data : []);
-        } else {
-          setWarehouses([]); // Default to empty array if fetch fails
-        }
 
         // Fetch suppliers
         const suppliersRes = await fetch(
@@ -157,21 +139,9 @@ function ProductsPageContent() {
     description: "",
     quantity: "",
     supplier: "",
-    warehouse: "",
     category_id: "",
     supplier_id: "",
-    warehouse_id: "",
   });
-
-  // Set default warehouse when user data is available and modal opens
-  useEffect(() => {
-    if (showAddModal && user && user.role_name === "Staff" && user.warehouse_id) {
-      setAddValues(prev => ({
-        ...prev,
-        warehouse_id: user.warehouse_id
-      }));
-    }
-  }, [showAddModal, user]);
 
   function handleAddInputChange(e) {
     const { name, value } = e.target;
@@ -183,12 +153,6 @@ function ProductsPageContent() {
     try {
       const access_token = localStorage.getItem("access_token");
       
-      // Set warehouse_id based on user role_name
-      let warehouseId = addValues.warehouse_id;
-      if (user && user.role_name === "staff" && user.warehouse_id) {
-        warehouseId = user.warehouse_id;
-      }
-      
       const body = {
         name: addValues.name,
         price: parseFloat(addValues.price),
@@ -197,7 +161,6 @@ function ProductsPageContent() {
         image_url: `https://api.dicebear.com/9.x/identicon/svg?seed=${addValues.name}`, // or allow upload
         category_id: addValues.category_id,
         supplier_id: addValues.supplier_id,
-        warehouse_id: warehouseId,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/create-product`,
@@ -228,10 +191,8 @@ function ProductsPageContent() {
         description: "",
         quantity: "",
         supplier: "",
-        warehouse: "",
         category_id: "",
         supplier_id: "",
-        warehouse_id: user && user.role_name === "staff" && user.warehouse_id ? user.warehouse_id : "",
       });
     } catch (error) {
       setError("Error creating product");
@@ -285,7 +246,6 @@ function ProductsPageContent() {
           categories={categories}
           suppliers={suppliers}
           user={user}
-          warehouses={warehouses}
         />
       </TabsContent>
       {showAddModal && (
@@ -350,29 +310,6 @@ function ProductsPageContent() {
                       ))}
                     </select>
                   </div>
-                  {user && user.role_name === "admin" && (
-                    <div className="col-span-2 sm:col-span-1">
-                      <label htmlFor="add-warehouse" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Warehouse</label>
-                      <select id="add-warehouse" name="warehouse_id" value={addValues.warehouse_id} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required>
-                        <option value="">Select warehouse</option>
-                        {warehouses.map((warehouse) => (
-                          <option key={warehouse.warehouse_id} value={warehouse.warehouse_id}>{warehouse.warehouse_name}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {user && user.role_name === "staff" && (
-                    <div className="col-span-2 sm:col-span-1">
-                      <label htmlFor="add-warehouse-display" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Warehouse</label>
-                      <input 
-                        type="text" 
-                        id="add-warehouse-display" 
-                        value={warehouses.find(w => w.warehouse_id === user.warehouse_id)?.warehouse_name || "Your Warehouse"} 
-                        className="bg-gray-100 border border-gray-300 text-gray-500 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-400" 
-                        disabled 
-                      />
-                    </div>
-                  )}
                 </div>
                 <button type="submit" className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                   <svg className="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">

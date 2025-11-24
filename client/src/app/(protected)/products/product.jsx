@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState, useRef } from "react";
 
-export function Product({ product, categories, setError, setShowAlert, suppliers, user, warehouses }) {
+export function Product({ product, categories, setError, setShowAlert, suppliers, user }) {
   const [showModal, setShowModal] = useState(false);
   const modalRef = useRef();
 
@@ -25,10 +25,8 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
     description: product.description || "",
     quantity: product.quantity || "",
     supplier_id: product.supplier?.supplier_id || "",
-    warehouse_id: product.warehouse?.warehouse_id || "",
     category_id: product.category?.category_id || "",
     supplier: product.supplier?.name || "",
-    warehouse: product.warehouse?.name || "",
     category_name: product.category?.name || "",
   });
 
@@ -92,7 +90,6 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
         image_url: product.image_url, // keep original image_url (or use editValues if you allow editing)
         category_id: editValues.category_id || product.category?.category_id,
         supplier_id: editValues.supplier_id || product.supplier?.supplier_id,
-        warehouse_id: editValues.warehouse_id || product.warehouse?.warehouse_id,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/update-product`,
@@ -172,9 +169,6 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       </TableCell>
       <TableCell className="hidden md:table-cell">
         {product.supplier?.name || "-"}
-      </TableCell>
-      <TableCell className="hidden md:table-cell">
-        {product.warehouse?.name || "-"}
       </TableCell>
       <TableCell>
         <DropdownMenu>

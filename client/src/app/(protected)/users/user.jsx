@@ -13,46 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
-export function User({ user, warehouses, setError, setShowAlert }) {
-  const [currentWarehouse, setCurrentWarehouse] = useState(
-    user.warehouse_id || 0
-  );
-  const [currentWarehouseName, setCurrentWarehouseName] = useState(
-    user.warehouse_name || "N/A"
-  );
+export function User({ user, setError, setShowAlert }) {
   const [isActive, setIsActive] = useState(user.is_active);
-
-  // create new warehouses array with warehouse_id and warehouse_name this also include the N/A warehouse
-  //
-  warehouses = warehouses.map((warehouse) => ({
-    warehouse_id: warehouse.warehouse_id,
-    warehouse_name: warehouse.warehouse_name,
-  }));
-  warehouses = warehouses.filter(
-    (warehouse) => warehouse.warehouse_id !== user.warehouse_id
-  );
-  // add N/A warehouse to the warehouses array
-  warehouses = [
-    {
-      warehouse_id: user.warehouse_id || 0,
-      warehouse_name: user.warehouse_name || "N/A",
-    },
-    ...warehouses,
-  ];
 
   const activateUser = async () => {
     try {
       const access_token = localStorage.getItem("access_token");
-      if(currentWarehouse === 0) {
-        setError("Please select a warehouse");
-        setShowAlert(true);
-        setTimeout(() => {
-          setShowAlert(false);
-        }, 3000);
-        return;
-      }
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/activate-user?warehouse_id=${currentWarehouse}&user_id=${user.user_id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/activate-user?user_id=${user.user_id}`,
         {
           method: "POST",
           headers: {
@@ -86,7 +54,7 @@ export function User({ user, warehouses, setError, setShowAlert }) {
       const access_token = localStorage.getItem("access_token");
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/deactivate-user?user_id=${user.user_id}&warehouse_id=${currentWarehouse}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/deactivate-user?user_id=${user.user_id}`,
         {
           method: "POST",
           headers: {
@@ -158,31 +126,6 @@ export function User({ user, warehouses, setError, setShowAlert }) {
           </Badge>
         )}
       </TableCell>
-      <TableCell className="hidden md:table-cell">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              {currentWarehouseName}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {warehouses.map((warehouse) => (
-              <DropdownMenuItem
-                key={warehouse.warehouse_id}
-                onClick={() => {
-                  setCurrentWarehouse(warehouse.warehouse_id);
-                  setCurrentWarehouseName(warehouse.warehouse_name);
-                }}
-                className={cn(
-                  warehouse.warehouse_id === currentWarehouse && "font-bold"
-                )}
-              >
-                {warehouse.warehouse_name}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -202,9 +145,6 @@ export function User({ user, warehouses, setError, setShowAlert }) {
               <button type="submit" onClick={deactivateUser}>
                 Deactivate
               </button>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button type="submit" onClick={activateUser}>Assigned warehouse</button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

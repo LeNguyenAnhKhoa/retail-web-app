@@ -13,153 +13,93 @@ class SupplierController:
         if not isinstance(user_info, dict):
             self.db.close_pool()
             raise InvalidDataException("User info must be a dictionary")
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
-        if not warehouse_id or not role_name:
+        role_name = user_info.get("role_name", "").lower()
+        if not role_name:
             self.db.close_pool()
-            raise InvalidDataException("Warehouse ID and role name must be provided in user info")
-        if role_name not in ("admin", "staff"):
+            raise InvalidDataException("Role name must be provided in user info")
+        if role_name not in ("admin", "staff", "manager", "stockkeeper"):
             self.db.close_pool()
-            raise InvalidDataException("User role must be either 'admin' or 'staff'")
+            raise InvalidDataException("User role must be either 'admin', 'staff', 'manager', or 'stockkeeper'")
         
         # Prepare search parameter
         search = search.strip() if search else None
         if search and not isinstance(search, str):
             raise InvalidDataException("Search must be a string")
         
-        if role_name == "admin":
-            if search:
-                search_param = f"%{search}%"
-                result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_BY_SEARCH, 
-                                             (search_param, search_param, search_param, search_param))
-            else:
-                result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS)
-            self.db.close_pool()
-            suppliers = []
-            for row in result:
-                supplier = {
-                    "supplier_id": row[2],
-                    "supplier_name": row[3],
-                    "contact_name": row[4],
-                    "contact_email": row[5],
-                    "phone": row[6],
-                    "total_products": row[7],
-                    "total_product_quantity": row[8],
-                    "avg_product_price": row[9],
-                    "earliest_product_created": row[10],
-                    "latest_product_updated": row[11],
-                    "supplier_created_time": row[12],
-                    "supplier_updated_time": row[13]
-                }
-                if suppliers and suppliers[-1]["supplier_id"] == supplier["supplier_id"]:
-                    # If the supplier already exists in the list, skip adding it again
-                    continue
-                suppliers.append(supplier)
-            return suppliers
-        
-        elif role_name == "staff":
-            if search:
-                search_param = f"%{search}%"
-                result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_BY_WAREHOUSE_ID_WITH_SEARCH, 
-                                             (warehouse_id, search_param, search_param, search_param, search_param))
-            else:
-                result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_BY_WAREHOUSE_ID, (warehouse_id,))
-            self.db.close_pool()
-            suppliers = []
-            for row in result:
-                supplier = {
-                    "supplier_id": row[2],
-                    "supplier_name": row[3],
-                    "contact_name": row[4],
-                    "contact_email": row[5],
-                    "phone": row[6],
-                    "total_products": row[7],
-                    "total_product_quantity": row[8],
-                    "avg_product_price": row[9],
-                    "earliest_product_created": row[10],
-                    "latest_product_updated": row[11],
-                    "supplier_created_time": row[12],
-                    "supplier_updated_time": row[13]
-                }
-                suppliers.append(supplier)
-            return suppliers
-        return []
+        # All roles can access all suppliers since there's only one warehouse
+        if search:
+            search_param = f"%{search}%"
+            result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_BY_SEARCH, 
+                                         (search_param, search_param, search_param, search_param))
+        else:
+            result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS)
+        self.db.close_pool()
+        suppliers = []
+        for row in result:
+            supplier = {
+                "supplier_id": row[2],
+                "supplier_name": row[3],
+                "contact_name": row[4],
+                "contact_email": row[5],
+                "phone": row[6],
+                "total_products": row[7],
+                "total_product_quantity": row[8],
+                "avg_product_price": row[9],
+                "earliest_product_created": row[10],
+                "latest_product_updated": row[11],
+                "supplier_created_time": row[12],
+                "supplier_updated_time": row[13]
+            }
+            if suppliers and suppliers[-1]["supplier_id"] == supplier["supplier_id"]:
+                # If the supplier already exists in the list, skip adding it again
+                continue
+            suppliers.append(supplier)
+        return suppliers
 
     def get_supplier(self, supplier_id: int, user_info: dict) -> dict:
         # Validate user_info is a dict
         if not isinstance(user_info, dict):
             self.db.close_pool()
             raise InvalidDataException("User info must be a dictionary")
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
-        if not warehouse_id or not role_name:
+        role_name = user_info.get("role_name", "").lower()
+        if not role_name:
             self.db.close_pool()
-            raise InvalidDataException("Warehouse ID and role name must be provided in user info")
-        if role_name not in ("admin", "staff"):
+            raise InvalidDataException("Role name must be provided in user info")
+        if role_name not in ("admin", "staff", "manager", "stockkeeper"):
             self.db.close_pool()
-            raise InvalidDataException("User role must be either 'admin' or 'staff'")
+            raise InvalidDataException("User role must be either 'admin', 'staff', 'manager', or 'stockkeeper'")
         # Check if supplier_id is valid
         if not isinstance(supplier_id, int) or supplier_id <= 0:
             self.db.close_pool()
             raise InvalidDataException("Invalid supplier ID")
-        # Fetch supplier by ID
-        if role_name == "admin":
-            result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_WITH_PRODUCTS, (supplier_id,))
-            self.db.close_pool()
-            if not result:
-                raise NotFoundException(f"Supplier with ID {supplier_id} not found")
-            supplier = {
-                "supplier_id": result[0][2],
-                "supplier_name": result[0][3],
-                "contact_name": result[0][4],
-                "contact_email": result[0][5],
-                "phone": result[0][6],
-                "products": []
+        # Fetch supplier by ID - all roles have same access
+        result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_WITH_PRODUCTS, (supplier_id,))
+        self.db.close_pool()
+        if not result:
+            raise NotFoundException(f"Supplier with ID {supplier_id} not found")
+        supplier = {
+            "supplier_id": result[0][2],
+            "supplier_name": result[0][3],
+            "contact_name": result[0][4],
+            "contact_email": result[0][5],
+            "phone": result[0][6],
+            "products": []
+        }
+        for row in result:
+            product = {
+                "product_id": row[7],
+                "product_name": row[8],
+                "description": row[9],
+                "price": row[10],
+                "quantity": row[11],
+                "category_id": row[12],
+                "category_name": row[13],
+                "product_created_time": row[14],
+                "product_updated_time": row[15]
             }
-            for row in result:
-                product = {
-                    "product_id": row[7],
-                    "product_name": row[8],
-                    "description": row[9],
-                    "price": row[10],
-                    "quantity": row[11],
-                    "category_id": row[12],
-                    "category_name": row[13],
-                    "product_created_time": row[14],
-                    "product_updated_time": row[15]
-                }
-                if row[7] is not None:
-                    supplier["products"].append(product)
-            return supplier
-        elif role_name == "staff":
-            result = self.db.execute_query(SupplierQueries.GET_SUPPLIER_WITH_PRODUCTS_BY_ID, (supplier_id, warehouse_id))
-            self.db.close_pool()
-            if not result:
-                raise NotFoundException(f"Supplier with ID {supplier_id} not found")
-            supplier = {
-                "supplier_id": result[0][2],
-                "supplier_name": result[0][3],
-                "contact_name": result[0][4],
-                "contact_email": result[0][5],
-                "phone": result[0][6],
-                "products": []
-            }
-            for row in result:
-                product = {
-                    "product_id": row[7],
-                    "product_name": row[8],
-                    "description": row[9],
-                    "price": row[10],
-                    "quantity": row[11],
-                    "category_id": row[12],
-                    "category_name": row[13],
-                    "product_created_time": row[14],
-                    "product_updated_time": row[15]
-                }
-                if row[7] is not None:
-                    supplier["products"].append(product)
-            return supplier
-        return {}
+            if row[7] is not None:
+                supplier["products"].append(product)
+        return supplier
 
     def create_supplier(self, supplier: dict):
         # Handle backward compatibility
@@ -242,31 +182,21 @@ class SupplierController:
         if not isinstance(user_info, dict):
             self.db.close_pool()
             raise InvalidDataException("User info must be a dictionary")
-        warehouse_id = user_info.get("warehouse_id")
-        role_name = user_info.get("role_name")
-        if not warehouse_id or not role_name:
+        role_name = user_info.get("role_name", "").lower()
+        if not role_name:
             self.db.close_pool()
-            raise InvalidDataException("Warehouse ID and role name must be provided in user info")
-        if role_name not in ("admin", "staff"):
+            raise InvalidDataException("Role name must be provided in user info")
+        if role_name not in ("admin", "staff", "manager", "stockkeeper"):
             self.db.close_pool()
-            raise InvalidDataException("User role must be either 'admin' or 'staff'")
+            raise InvalidDataException("User role must be either 'admin', 'staff', 'manager', or 'stockkeeper'")
         
-        if role_name == "admin":
-            result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS)
-            suppliers = []
-            if not result:
-                self.db.close_pool()
-                return 0
-            # Count unique suppliers
-            unique_supplier_ids = set(row[2] for row in result)
+        # All roles have same access now
+        result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS)
+        suppliers = []
+        if not result:
             self.db.close_pool()
-            return len(unique_supplier_ids)
-                
-        else:
-            result = self.db.execute_query(SupplierQueries.GET_ALL_SUPPLIERS_BY_WAREHOUSE_ID, (warehouse_id,))
-            if not result:
-                self.db.close_pool()
-                return 0
-            unique_supplier_ids = set(row[2] for row in result)
-            self.db.close_pool()
-            return len(unique_supplier_ids)
+            return 0
+        # Count unique suppliers
+        unique_supplier_ids = set(row[2] for row in result)
+        self.db.close_pool()
+        return len(unique_supplier_ids)
