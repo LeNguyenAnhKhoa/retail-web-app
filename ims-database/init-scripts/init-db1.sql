@@ -70,12 +70,14 @@ CREATE TABLE products (
     stock_quantity INT NOT NULL DEFAULT 0,
     image_url TEXT,
     created_by INT NOT NULL,
+    supplier_id INT,
     is_active BOOLEAN DEFAULT TRUE,
     description TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(category_id),
-    CONSTRAINT fk_products_created_by FOREIGN KEY (created_by) REFERENCES users(user_id)
+    CONSTRAINT fk_products_created_by FOREIGN KEY (created_by) REFERENCES users(user_id),
+    CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id)
 );
 
 -- CUSTOMER SYSTEM

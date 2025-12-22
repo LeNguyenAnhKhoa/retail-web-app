@@ -18,12 +18,15 @@ SELECT
     p.created_by,
     u.full_name AS created_by_name,
     u.role AS created_by_role,
+    p.supplier_id,
+    s.name AS supplier_name,
     p.created_at,
     p.updated_at
 FROM 
     products p
     INNER JOIN categories c ON p.category_id = c.category_id
-    INNER JOIN users u ON p.created_by = u.user_id;
+    INNER JOIN users u ON p.created_by = u.user_id
+    LEFT JOIN suppliers s ON p.supplier_id = s.supplier_id;
 
 -- Supplier view
 CREATE OR REPLACE VIEW supplier_summary_view AS
@@ -34,14 +37,14 @@ SELECT
     s.phone,
     s.address,
     s.email,
-    COUNT(DISTINCT it.ticket_id) AS total_import_tickets,
-    COALESCE(SUM(itd.quantity * itd.price), 0) AS total_import_value,
+    COUNT(p.product_id) AS total_products,
+    COALESCE(SUM(p.stock_quantity), 0) AS total_product_quantity,
+    COALESCE(AVG(p.selling_price), 0) AS avg_product_price,
     s.created_at,
     s.updated_at
 FROM 
     suppliers s
-    LEFT JOIN inventory_tickets it ON s.supplier_id = it.supplier_id AND it.type = 'IMPORT'
-    LEFT JOIN inventory_ticket_details itd ON it.ticket_id = itd.ticket_id
+    LEFT JOIN products p ON s.supplier_id = p.supplier_id
 GROUP BY 
     s.supplier_id, s.name, s.contact_name, s.phone, s.address, s.email, s.created_at, s.updated_at;
 

@@ -44,7 +44,9 @@ class GetAllProductQuery:
                 "is_active": row[10],
                 "description": row[11],
                 "created_by": row[12],
-                "created_by_name": row[13]
+                "created_by_name": row[13],
+                "supplier_id": row[15],
+                "supplier_name": row[16]
             }
             for row in result
         ]
@@ -87,7 +89,9 @@ class GetAllProductQuery:
                 "is_active": row[10],
                 "description": row[11],
                 "created_by": row[12],
-                "created_by_name": row[13]
+                "created_by_name": row[13],
+                "supplier_id": row[15],
+                "supplier_name": row[16]
             }
             for row in result
         ]

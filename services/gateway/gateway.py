@@ -23,8 +23,8 @@ SERVICES = {
     "user": "http://localhost:8001",
     "product": "http://localhost:8002",
     "order": "http://localhost:8003",
-    "supplier": "http://localhost:8004",
-    "customer": "http://localhost:8005",
+    "supplier": "http://localhost:8005",
+    "customer": "http://localhost:8004",
 }
 
 @app.api_route("/{service}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])

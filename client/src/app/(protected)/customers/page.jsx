@@ -84,7 +84,6 @@ function CustomersPageContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addValues, setAddValues] = useState({
     name: "",
-    email: "",
     phone: "",
     address: "",
   });
@@ -101,7 +100,6 @@ function CustomersPageContent() {
       const body = {
         name: addValues.name,
         phone: addValues.phone,
-        email: addValues.email || null, // email is optional
         address: addValues.address || "",
       };
       const response = await fetch(
@@ -126,7 +124,7 @@ function CustomersPageContent() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
       setShowAddModal(false);
-      setAddValues({ name: "", email: "", phone: "", address: "" });
+      setAddValues({ name: "", phone: "", address: "" });
       
       // Refresh the customers list
       window.location.reload();
@@ -213,20 +211,6 @@ function CustomersPageContent() {
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
                       placeholder="Enter customer name" 
                       required 
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="add-email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
-                      Email
-                    </label>
-                    <input 
-                      type="email" 
-                      name="email" 
-                      id="add-email" 
-                      value={addValues.email} 
-                      onChange={handleAddInputChange} 
-                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
-                      placeholder="Enter email address" 
                     />
                   </div>
                   <div>

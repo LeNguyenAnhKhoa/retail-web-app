@@ -11,6 +11,7 @@ class ProductCreateModel(BaseModel):
     stock_quantity: int = Field(0, title="Stock Quantity", description="Current stock quantity")
     image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
     created_by: int = Field(..., title="Created By", description="User ID who created this product")
+    supplier_id: Optional[int] = Field(None, title="Supplier ID", description="ID of the supplier")
     is_active: bool = Field(True, title="Is Active", description="Whether product is active")
     description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
     
@@ -27,6 +28,7 @@ class ProductCreateModel(BaseModel):
                 "stock_quantity": 100,
                 "image_url": "http://example.com/coca.jpg",
                 "created_by": 3,
+                "supplier_id": 1,
                 "is_active": True,
                 "description": "Nước ngọt Coca Cola lon 330ml"
             }
@@ -42,6 +44,7 @@ class ProductUpdateModel(BaseModel):
     selling_price: Optional[float] = Field(None, title="Selling Price", description="Selling price")
     stock_quantity: Optional[int] = Field(None, title="Stock Quantity", description="Current stock quantity")
     image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
+    supplier_id: Optional[int] = Field(None, title="Supplier ID", description="ID of the supplier")
     is_active: Optional[bool] = Field(None, title="Is Active", description="Whether product is active")
     description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
     
@@ -76,6 +79,8 @@ class ProductModel(BaseModel):
     image_url: Optional[str] = Field(None, title="Product Image URL", description="URL of the product image")
     created_by: int = Field(..., title="Created By", description="User ID who created")
     created_by_name: Optional[str] = Field(None, title="Created By Name", description="Name of user who created")
+    supplier_id: Optional[int] = Field(None, title="Supplier ID", description="ID of the supplier")
+    supplier_name: Optional[str] = Field(None, title="Supplier Name", description="Name of the supplier")
     is_active: bool = Field(..., title="Is Active", description="Whether product is active")
     description: Optional[str] = Field(None, title="Product Description", description="Description of the product")
 
@@ -95,6 +100,8 @@ class ProductModel(BaseModel):
                 "image_url": "http://example.com/coca.jpg",
                 "created_by": 3,
                 "created_by_name": "Nguyen Van A",
+                "supplier_id": 1,
+                "supplier_name": "Coca Cola VN",
                 "is_active": True,
                 "description": "Nước ngọt Coca Cola lon 330ml"
             }

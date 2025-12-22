@@ -51,6 +51,7 @@ export function OrdersTable({ orders, offset, setOffset, totalOrders, limit = 5,
               <TableHead>Status</TableHead>
               <TableHead className="hidden md:table-cell">Date</TableHead>
               <TableHead className="hidden md:table-cell">Total</TableHead>
+              <TableHead className="hidden md:table-cell">Payment Method</TableHead>
               <TableHead className="hidden md:table-cell">Items</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>

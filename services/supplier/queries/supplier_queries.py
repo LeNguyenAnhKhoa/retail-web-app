@@ -1,14 +1,14 @@
 class SupplierQueries:
     GET_ALL_SUPPLIERS = """
         SELECT supplier_id, supplier_name, contact_name, phone, address, email,
-               total_import_tickets, total_import_value, created_at, updated_at
+               total_products, total_product_quantity, avg_product_price, created_at, updated_at
         FROM supplier_summary_view
         ORDER BY updated_at DESC, supplier_id ASC;
     """
     
     GET_ALL_SUPPLIERS_BY_SEARCH = """
         SELECT supplier_id, supplier_name, contact_name, phone, address, email,
-               total_import_tickets, total_import_value, created_at, updated_at
+               total_products, total_product_quantity, avg_product_price, created_at, updated_at
         FROM supplier_summary_view
         WHERE LOWER(supplier_name) LIKE LOWER(CONCAT('%%', %s, '%%'))
         OR LOWER(contact_name) LIKE LOWER(CONCAT('%%', %s, '%%'))
@@ -25,6 +25,13 @@ class SupplierQueries:
     GET_SUPPLIER_WITH_PRODUCTS_BY_ID = """
         SELECT * FROM supplier_summary_view
         WHERE supplier_id = %s;
+    """
+    
+    GET_PRODUCTS_BY_SUPPLIER_ID = """
+        SELECT p.product_id, p.name, p.description, p.import_price, p.stock_quantity, c.name, p.created_at, p.updated_at
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.category_id
+        WHERE p.supplier_id = %s;
     """
     
     CHECK_SUPPLIER_EXISTS = """

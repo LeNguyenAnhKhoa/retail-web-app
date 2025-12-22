@@ -23,17 +23,17 @@ INSERT INTO suppliers (name, contact_name, phone, address, email) VALUES
 ('Công ty TNHH Masan', 'Hoàng Văn E', '0285678901', '654 Đường MNO, Q5, TP.HCM', 'info@masan.com.vn');
 
 -- Insert Products (created_by = 3 is stock1 - thủ kho)
-INSERT INTO products (code, name, category_id, unit, import_price, selling_price, stock_quantity, created_by, is_active, description) VALUES 
-('CC001', 'Coca Cola 330ml', 1, 'Lon', 6000, 8000, 100, 3, TRUE, 'Nước ngọt Coca Cola lon 330ml'),
-('PP001', 'Pepsi 330ml', 1, 'Lon', 5500, 7500, 150, 3, TRUE, 'Nước ngọt Pepsi lon 330ml'),
-('ST001', 'Sting Dâu 330ml', 1, 'Lon', 7000, 9000, 80, 3, TRUE, 'Nước tăng lực Sting vị dâu'),
-('SN001', 'Snack Ostar Phô Mai', 2, 'Gói', 3000, 5000, 200, 3, TRUE, 'Snack khoai tây vị phô mai'),
-('SN002', 'Snack Swing Cay', 2, 'Gói', 2500, 4000, 180, 3, TRUE, 'Snack bắp vị cay'),
-('MI001', 'Hao Hao Tôm Chua Cay', 3, 'Gói', 3500, 5000, 300, 3, TRUE, 'Mì Hao Hao tôm chua cay'),
-('MI002', 'Mì Kokomi Tôm', 3, 'Gói', 3000, 4500, 250, 3, TRUE, 'Mì Kokomi vị tôm'),
-('BK001', 'Bánh Chocopie', 4, 'Hộp', 25000, 32000, 50, 3, TRUE, 'Bánh Chocopie hộp 12 cái'),
-('BK002', 'Kẹo Alpenliebe', 4, 'Gói', 15000, 20000, 100, 3, TRUE, 'Kẹo sữa Alpenliebe'),
-('GV001', 'Mắm Tôm Nam Ngư', 5, 'Chai', 18000, 25000, 60, 3, TRUE, 'Mắm tôm đặc biệt Nam Ngư 250g');
+INSERT INTO products (code, name, category_id, unit, import_price, selling_price, stock_quantity, created_by, is_active, description, supplier_id) VALUES 
+('CC001', 'Coca Cola 330ml', 1, 'Lon', 6000, 8000, 100, 3, TRUE, 'Nước ngọt Coca Cola lon 330ml', 1),
+('PP001', 'Pepsi 330ml', 1, 'Lon', 5500, 7500, 150, 3, TRUE, 'Nước ngọt Pepsi lon 330ml', 1),
+('ST001', 'Sting Dâu 330ml', 1, 'Lon', 7000, 9000, 80, 3, TRUE, 'Nước tăng lực Sting vị dâu', 1),
+('SN001', 'Snack Ostar Phô Mai', 2, 'Gói', 3000, 5000, 200, 3, TRUE, 'Snack khoai tây vị phô mai', 2),
+('SN002', 'Snack Swing Cay', 2, 'Gói', 2500, 4000, 180, 3, TRUE, 'Snack bắp vị cay', 2),
+('MI001', 'Hao Hao Tôm Chua Cay', 3, 'Gói', 3500, 5000, 300, 3, TRUE, 'Mì Hao Hao tôm chua cay', 3),
+('MI002', 'Mì Kokomi Tôm', 3, 'Gói', 3000, 4500, 250, 3, TRUE, 'Mì Kokomi vị tôm', 5),
+('BK001', 'Bánh Chocopie', 4, 'Hộp', 25000, 32000, 50, 3, TRUE, 'Bánh Chocopie hộp 12 cái', 4),
+('BK002', 'Kẹo Alpenliebe', 4, 'Gói', 15000, 20000, 100, 3, TRUE, 'Kẹo sữa Alpenliebe', 4),
+('GV001', 'Mắm Tôm Nam Ngư', 5, 'Chai', 18000, 25000, 60, 3, TRUE, 'Mắm tôm đặc biệt Nam Ngư 250g', 5);
 
 -- Insert Customers
 INSERT INTO customers (name, phone, address) VALUES 
@@ -68,8 +68,7 @@ INSERT INTO inventory_ticket_details (ticket_id, product_id, quantity, price) VA
 INSERT INTO orders (code, customer_id, user_id, total_amount, payment_method, status) VALUES 
 ('HD001', 1, 2, 45000, 'CASH', 'COMPLETED'),
 ('HD002', 2, 2, 180000, 'TRANSFER', 'COMPLETED'),
-('HD003', 3, 2, 72000, 'CARD', 'COMPLETED'),
-('HD004', NULL, 2, 15000, 'CASH', 'COMPLETED'); -- Khách vãng lai (customer_id = NULL)
+('HD003', 3, 2, 72000, 'CARD', 'COMPLETED');
 
 -- Insert Order Details
 INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price) VALUES 
@@ -82,6 +81,4 @@ INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_pric
 (2, 7, 20, 4500, 3000),
 -- HD003
 (3, 1, 5, 8000, 6000),
-(3, 8, 1, 32000, 25000),
--- HD004 (vãng lai)
-(4, 2, 2, 7500, 5500);
+(3, 8, 1, 32000, 25000);

@@ -83,7 +83,7 @@ export function OrderItemTable({ items, offset, setOffset, totalItems, limit = 5
               <span className="font-semibold text-muted-foreground">Customer:</span> {order.customer_name}
             </span>
             <span>
-              <span className="font-semibold text-muted-foreground">Email:</span> {order.customer_email}
+              <span className="font-semibold text-muted-foreground">Phone:</span> {order.customer_phone}
             </span>
             <span>
               <span className="font-semibold text-muted-foreground">Order Date:</span> {formatDate(order.order_date)}

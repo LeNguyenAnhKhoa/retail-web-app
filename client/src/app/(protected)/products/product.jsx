@@ -20,14 +20,14 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
   // Modal state for editing
   const [editValues, setEditValues] = useState({
     name: product.name || "",
-    price: product.price || "",
-    category: product.category?.name || "",
+    price: product.selling_price || "",
+    category: product.category_name || "",
     description: product.description || "",
-    quantity: product.quantity || "",
+    quantity: product.stock_quantity || "",
     supplier_id: product.supplier?.supplier_id || "",
-    category_id: product.category?.category_id || "",
+    category_id: product.category_id || "",
     supplier: product.supplier?.name || "",
-    category_name: product.category?.name || "",
+    category_name: product.category_name || "",
   });
 
   function handleInputChange(e) {
@@ -84,12 +84,12 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       const body = {
         product_id: product.product_id,
         name: editValues.name,
-        price: parseFloat(editValues.price),
+        selling_price: parseFloat(editValues.price),
         description: editValues.description,
-        quantity: parseInt(editValues.quantity, 10),
+        stock_quantity: parseInt(editValues.quantity, 10),
         image_url: product.image_url, // keep original image_url (or use editValues if you allow editing)
-        category_id: editValues.category_id || product.category?.category_id,
-        supplier_id: editValues.supplier_id || product.supplier?.supplier_id,
+        category_id: editValues.category_id || product.category_id,
+        // supplier_id: editValues.supplier_id || product.supplier?.supplier_id, // Supplier not supported in update yet
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/update-product`,
@@ -134,41 +134,42 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       </TableCell>
       <TableCell className="font-medium">{cropText(product.name)}</TableCell>
       <TableCell>{cropText(product.description)}</TableCell>
-      <TableCell className="hidden md:table-cell">{`$${product.price}`}</TableCell>
-      <TableCell className="hidden md:table-cell">{product.quantity}</TableCell>
+      <TableCell className="hidden md:table-cell">{`$${product.import_price}`}</TableCell>
+      <TableCell className="hidden md:table-cell">{`$${product.selling_price}`}</TableCell>
+      <TableCell className="hidden md:table-cell">{product.stock_quantity}</TableCell>
       <TableCell className="hidden md:table-cell">
         <Badge
           variant="outline"
           className={cn(
             "capitalize",
-            product.category?.name === "Electronics"
+            product.category_name === "Electronics"
               ? "bg-blue-100 border-blue-500 text-blue-700"
-              : product.category?.name === "Books"
+              : product.category_name === "Books"
                 ? "bg-yellow-100 border-yellow-500 text-yellow-700"
-                : product.category?.name === "Clothing"
+                : product.category_name === "Clothing"
                   ? "bg-green-100 border-green-500 text-green-700"
-                  : product.category?.name === "Toys"
+                  : product.category_name === "Toys"
                     ? "bg-pink-100 border-pink-500 text-pink-700"
-                    : product.category?.name === "Furniture"
+                    : product.category_name === "Furniture"
                       ? "bg-orange-100 border-orange-500 text-orange-700"
-                      : product.category?.name === "Sports"
+                      : product.category_name === "Sports"
                         ? "bg-lime-100 border-lime-500 text-lime-700"
-                        : product.category?.name === "Beauty"
+                        : product.category_name === "Beauty"
                           ? "bg-rose-100 border-rose-500 text-rose-700"
-                          : product.category?.name === "Automotive"
+                          : product.category_name === "Automotive"
                             ? "bg-gray-200 border-gray-500 text-gray-700"
-                            : product.category?.name === "Food"
+                            : product.category_name === "Food"
                               ? "bg-amber-100 border-amber-500 text-amber-700"
-                              : product.category?.name === "Health"
+                              : product.category_name === "Health"
                                 ? "bg-teal-100 border-teal-500 text-teal-700"
                                 : "bg-gray-100 border-gray-400 text-gray-700"
           )}
         >
-          {product.category?.name || "-"}
+          {product.category_name || "-"}
         </Badge>
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        {product.supplier?.name || "-"}
+        {product.supplier_name || "-"}
       </TableCell>
       <TableCell>
         <DropdownMenu>

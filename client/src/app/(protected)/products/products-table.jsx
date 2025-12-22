@@ -54,7 +54,8 @@ export function ProductsTable({ products, offset, setOffset, totalProducts, setE
               <TableHead className="hidden sm:table-cell">ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead className="hidden md:table-cell">Price</TableHead>
+              <TableHead className="hidden md:table-cell">Import Price</TableHead>
+              <TableHead className="hidden md:table-cell">Sell Price</TableHead>
               <TableHead className="hidden md:table-cell">Quantity</TableHead>
               <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead className="hidden md:table-cell">Supplier</TableHead>
