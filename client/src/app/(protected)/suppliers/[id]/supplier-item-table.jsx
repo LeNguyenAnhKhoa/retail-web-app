@@ -35,26 +35,26 @@ export function SupplierTable({ products, offset, setOffset, totalProducts, limi
     <Card>
       <CardHeader>
         <CardTitle>Products of Supplier</CardTitle>
-        <CardDescription>
-          {supplier && (
-            <div className="flex flex-wrap gap-6 items-center bg-muted/60 rounded-md p-4 mb-4 border border-muted-foreground/10">
-              <div>
-                <span className="font-semibold text-muted-foreground">Supplier ID:</span> {supplier.supplier_id}
-              </div>
-              <div>
-                <span className="font-semibold text-muted-foreground">Name:</span> {supplier.supplier_name}
-              </div>
-              <div>
-                <span className="font-semibold text-muted-foreground">Contact Name:</span> {supplier.contact_name}
-              </div>
-              <div>
-                <span className="font-semibold text-muted-foreground">Contact Email:</span> {supplier.contact_email}
-              </div>
-              <div>
-                <span className="font-semibold text-muted-foreground">Phone:</span> {supplier.phone}
-              </div>
+        {supplier && (
+          <div className="flex flex-wrap gap-6 items-center bg-muted/60 rounded-md p-4 mb-4 border border-muted-foreground/10">
+            <div>
+              <span className="font-semibold text-muted-foreground">Supplier ID:</span> {supplier.supplier_id}
             </div>
-          )}
+            <div>
+              <span className="font-semibold text-muted-foreground">Name:</span> {supplier.supplier_name}
+            </div>
+            <div>
+              <span className="font-semibold text-muted-foreground">Contact Name:</span> {supplier.contact_name}
+            </div>
+            <div>
+              <span className="font-semibold text-muted-foreground">Contact Email:</span> {supplier.contact_email}
+            </div>
+            <div>
+              <span className="font-semibold text-muted-foreground">Phone:</span> {supplier.phone}
+            </div>
+          </div>
+        )}
+        <CardDescription>
           All products provided by this supplier.
         </CardDescription>
       </CardHeader>

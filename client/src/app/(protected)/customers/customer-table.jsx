@@ -41,7 +41,6 @@ export function CustomersTable({ customers, offset, setOffset, totalCustomers, l
             <TableRow>
               <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
               <TableHead>Total Orders</TableHead>
               <TableHead>Total Spent</TableHead>

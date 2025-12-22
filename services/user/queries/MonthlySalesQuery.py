@@ -8,7 +8,7 @@ class MonthlySalesQuery:
     def close(self):
         self.db.close_pool()
         
-    def get_monthly_sales_data(self, warehouse_id=None):
+    def get_monthly_sales_data(self):
         """Get monthly sales data for the last 6 months"""
         # Calculate date range for last 6 months
         now = datetime.now()
@@ -20,41 +20,21 @@ class MonthlySalesQuery:
         for _ in range(months_back - 1):
             start_date = (start_date - timedelta(days=1)).replace(day=1)
         
-        if warehouse_id:
-            # Staff - get sales data for specific warehouse
-            query = """
-            SELECT 
-                DATE_FORMAT(o.order_date, '%Y-%m') as month,
-                YEAR(o.order_date) as year,
-                MONTH(o.order_date) as month_num,
-                COALESCE(SUM(osv.total_order_value), 0) as total_sales,
-                COUNT(DISTINCT o.order_id) as order_count
-            FROM order_summary_view osv
-            JOIN orders o ON osv.order_id = o.order_id
-            WHERE o.order_date >= %s 
-                AND o.status = 'completed'
-                AND osv.warehouse_id = %s
-            GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), YEAR(o.order_date), MONTH(o.order_date)
-            ORDER BY year ASC, month_num ASC
-            """
-            params = (start_date, warehouse_id)
-        else:
-            # Admin - get sales data for all warehouses
-            query = """
-            SELECT 
-                DATE_FORMAT(o.order_date, '%Y-%m') as month,
-                YEAR(o.order_date) as year,
-                MONTH(o.order_date) as month_num,
-                COALESCE(SUM(osv.total_order_value), 0) as total_sales,
-                COUNT(DISTINCT o.order_id) as order_count
-            FROM order_summary_view osv
-            JOIN orders o ON osv.order_id = o.order_id
-            WHERE o.order_date >= %s 
-                AND o.status = 'completed'
-            GROUP BY DATE_FORMAT(o.order_date, '%Y-%m'), YEAR(o.order_date), MONTH(o.order_date)
-            ORDER BY year ASC, month_num ASC
-            """
-            params = (start_date,)
+        # Get sales data for all
+        query = """
+        SELECT 
+            DATE_FORMAT(created_at, '%Y-%m') as month,
+            YEAR(created_at) as year,
+            MONTH(created_at) as month_num,
+            COALESCE(SUM(total_amount), 0) as total_sales,
+            COUNT(order_id) as order_count
+        FROM orders
+        WHERE created_at >= %s 
+            AND status = 'COMPLETED'
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m'), YEAR(created_at), MONTH(created_at)
+        ORDER BY year ASC, month_num ASC
+        """
+        params = (start_date,)
             
         result = self.db.execute_query(query, params)
         
@@ -99,9 +79,9 @@ class MonthlySalesQuery:
         
         return monthly_data
     
-    def get_monthly_sales_summary(self, warehouse_id=None):
+    def get_monthly_sales_summary(self):
         """Get summary statistics for monthly sales"""
-        monthly_data = self.get_monthly_sales_data(warehouse_id)
+        monthly_data = self.get_monthly_sales_data()
         
         if not monthly_data:
             return {

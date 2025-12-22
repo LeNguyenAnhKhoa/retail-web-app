@@ -31,9 +31,6 @@ class CreateProductController:
         if product.supplier_id <= 0:
             self.query.close()
             raise InvalidDataException("Invalid supplier ID")
-        if product.warehouse_id <= 0:
-            self.query.close()
-            raise InvalidDataException("Invalid warehouse ID")
 
         response = self.query.create_product(product)
         if not response:

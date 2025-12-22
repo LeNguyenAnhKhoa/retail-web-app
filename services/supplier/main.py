@@ -1,4 +1,17 @@
 import os
+from pathlib import Path
+
+# Load .env file manually since python-dotenv might not be installed
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if env_path.exists():
+    with open(env_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                # Only set if not already set (to allow override from shell)
+                if key not in os.environ:
+                    os.environ[key] = value
 
 from fastapi import FastAPI
 from fastapi import Request
@@ -50,3 +63,7 @@ async def http_exception_handler(request: Request, exc: CustomException):
             "data": {}
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8005)

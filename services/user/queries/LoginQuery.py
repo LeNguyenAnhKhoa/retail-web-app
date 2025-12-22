@@ -12,9 +12,8 @@ class LoginQuery:
             username, 
             email, 
             password_hash,
-            role_name,
+            role,
             image_url,
-            warehouse_id,
             is_active
             FROM users 
             WHERE email = %s 
@@ -32,8 +31,7 @@ class LoginQuery:
             "password_hash": result[3],
             "role_name": result[4],
             "image_url": result[5],
-            "warehouse_id": result[6],
-            "is_active": result[7]
+            "is_active": result[6]
         }
         
         return res

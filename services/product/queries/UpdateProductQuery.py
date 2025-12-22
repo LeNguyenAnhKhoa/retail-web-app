@@ -40,9 +40,6 @@ class UpdateProductQuery:
         if updated_product.supplier_id is not None:
             fields.append("supplier_id = %s")
             params.append(updated_product.supplier_id)
-        if updated_product.warehouse_id is not None:
-            fields.append("warehouse_id = %s")
-            params.append(updated_product.warehouse_id)
         
         if not fields:
             return False  # Nothing to update

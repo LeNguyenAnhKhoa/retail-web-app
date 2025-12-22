@@ -14,8 +14,8 @@ class DeactivateUserController:
         :return: None
         """
         # Logic to deactivate the user goes here
-
-        if not user_info or user_info.get("role_name") != "admin":
+        role_name = user_info.get("role_name", "").lower() if user_info else ""
+        if not user_info or role_name not in ("admin", "manager"):
             self.query.close()
             raise UnauthorizedException("You are not authorized to perform this action.")
         

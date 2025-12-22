@@ -7,8 +7,8 @@ class CreateProductQuery:
 
     def create_product(self, params: ProductCreateModel):
         query = """
-        INSERT INTO products (name, description, price, quantity, image_url, category_id, supplier_id, warehouse_id)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+        INSERT INTO products (name, description, price, quantity, image_url, category_id, supplier_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s);
         """
         
         params = (
@@ -18,8 +18,7 @@ class CreateProductQuery:
             params.quantity,
             params.image_url,
             params.category_id,
-            params.supplier_id,
-            params.warehouse_id
+            params.supplier_id
         )
         res = self.db.execute_query(query, params)
         self.db.close_pool()

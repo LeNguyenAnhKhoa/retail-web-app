@@ -135,31 +135,28 @@ export function Order({ order, onClick, setError, setShowAlert, onStatusUpdate }
       <TableCell>
         <div className="flex flex-col">
           <span className="font-medium">{order.customer_name || "N/A"}</span>
-          <span className="text-sm text-muted-foreground">{order.customer_email || "N/A"}</span>
         </div>
       </TableCell>
       <TableCell>
-        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.order_status] || 'bg-gray-100 text-gray-800'}`}>
-          {order.order_status || "unknown"}
+        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status?.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
+          {order.status || "unknown"}
         </div>
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        {formatDate(order.order_date)}
+        {formatDate(order.updated_at)}
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        {formatCurrencyValue(order.total_order_value)}
+        {formatCurrencyValue(order.total_amount)}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
+        {order.payment_method || "N/A"}
       </TableCell>
       <TableCell className="hidden md:table-cell">
         <div className="flex flex-col">
-          <span>{parseNumericValue(order.total_items)} items</span>
+          <span>{parseNumericValue(order.total_quantity)} items</span>
           <span className="text-sm text-muted-foreground">
-            {parseNumericValue(order.unique_products_ordered)} unique
+            {parseNumericValue(order.total_items)} unique
           </span>
-        </div>
-      </TableCell>
-      <TableCell className="hidden md:table-cell">
-        <div className="text-sm">
-          {order.warehouse_name || "N/A"}
         </div>
       </TableCell>
       <TableCell>

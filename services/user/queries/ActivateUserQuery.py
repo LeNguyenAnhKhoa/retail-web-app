@@ -4,40 +4,33 @@ class ActivateUserQuery:
     def __init__(self):
         self.db = Database()
         
-    
-    def check_if_warehouse_exists(self, warehouse_id: int):
+    def close(self):
+        self.db.close_pool()
+
+    def check_if_user_exists(self, user_id: int):
         """
-        Check if a warehouse exists in the database.
-        
-        :param warehouse_id: The ID of the warehouse to check.
-        :return: True if the warehouse exists, False otherwise.
+        Check if a user exists in the database.
+
+        :param user_id: The ID of the user to check.
+        :return: True if the user exists, False otherwise.
         """
-        query = "SELECT COUNT(*) FROM warehouses WHERE warehouse_id = %s"
-        res = self.db.execute_query(query, (warehouse_id,))
-        if res is None or res[0][0] == 0:
+        query = "SELECT COUNT(*) FROM users WHERE user_id = %s"
+        res = self.db.execute_query(query, (user_id,))
+        if not res:
             return False
-        return True
-        
-        
-    def activate_user(self, user_id: int, warehouse_id: int):
+        return res[0][0] > 0
+
+    def activate_user(self, user_id: int):
         """
         Activate a user in the database.
-        
+
         :param user_id: The ID of the user to activate.
-        :return: None
+        :return: True if the user was activated successfully, False otherwise.
         """
         query = """
-            UPDATE users SET 
-                is_active = 1,
-                warehouse_id = %s
-            WHERE user_id = %s"""
-        res = self.db.execute_query(query, (warehouse_id, user_id))
-        if res is None:
-            return False
-        return True
-        
-    def close(self):
+            UPDATE users
+            SET is_active = 1
+            WHERE user_id = %s
         """
-        Close the database connection.
-        """
-        self.db.close_pool()
+        res = self.db.execute_query(query, (user_id,))
+        return res is not None

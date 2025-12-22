@@ -9,7 +9,7 @@ class Database:
             'user': os.getenv('MYSQL_USER', 'root'),
             'password': os.getenv('MYSQL_PASSWORD', 'root'),
             'host': os.getenv('MYSQL_HOST', 'database'),
-            'database': os.getenv('MYSQL_DATABASE', 'test_db'),
+            'database': os.getenv('MYSQL_DATABASE', 'ims_database'),
             'port': os.getenv('MYSQL_PORT', 3306),
             'raise_on_warnings': True,
             'pool_name': os.getenv('SERVICE_NAME', 'db_pool'),

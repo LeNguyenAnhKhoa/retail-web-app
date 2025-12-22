@@ -31,9 +31,6 @@ class UpdateProductController:
         if updated_product.supplier_id is not None and updated_product.supplier_id <= 0:
             self.query.db.close_pool()
             raise InvalidDataException("Invalid supplier ID")
-        if updated_product.warehouse_id is not None and updated_product.warehouse_id <= 0:
-            self.query.db.close_pool()
-            raise InvalidDataException("Invalid warehouse ID")
         
         if not self.query.check_product_exists(updated_product.product_id):
             self.query.db.close_pool()

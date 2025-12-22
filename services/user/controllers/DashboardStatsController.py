@@ -14,23 +14,22 @@ class DashboardStatsController:
             if not isinstance(user_info, dict):
                 raise InvalidDataException("User info must be a dictionary")
                 
-            warehouse_id = user_info.get("warehouse_id")
             role_name = user_info.get("role_name")
             
-            if not warehouse_id or not role_name:
-                raise InvalidDataException("Warehouse ID and role name must be provided in user info")
+            if not role_name:
+                raise InvalidDataException("Role name must be provided in user info")
+            
+            # Convert role_name to lowercase for comparison
+            role_name_lower = role_name.lower()
                 
-            if role_name not in ("admin", "staff"):
-                raise InvalidDataException("User role must be either 'admin' or 'staff'")
+            if role_name_lower not in ("admin", "staff", "manager", "stockkeeper"):
+                raise InvalidDataException("User role must be either 'admin', 'staff', 'manager', or 'stockkeeper'")
             
-            # Determine warehouse filtering based on role
-            warehouse_filter = None if role_name == "admin" else warehouse_id
-            
-            # Get all statistics
-            revenue_stats = self.query.get_revenue_stats(warehouse_filter)
-            products_stats = self.query.get_products_stats(warehouse_filter)
-            orders_stats = self.query.get_orders_stats(warehouse_filter)
-            customers_stats = self.query.get_customers_stats()  # Customers are not warehouse-specific
+            # Get all statistics (no warehouse filtering needed)
+            revenue_stats = self.query.get_revenue_stats()
+            products_stats = self.query.get_products_stats()
+            orders_stats = self.query.get_orders_stats()
+            customers_stats = self.query.get_customers_stats()
             self.query.close()
             return {
                 "revenue": {

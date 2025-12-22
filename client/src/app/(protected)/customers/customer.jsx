@@ -17,7 +17,6 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
   // Modal state for editing
   const [editValues, setEditValues] = useState({
     name: customer.customer_name || customer.name || "",
-    email: customer.email || customer.contact_email || "",
     phone: customer.phone || "",
     address: customer.address || "",
   });
@@ -91,7 +90,6 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
       const access_token = localStorage.getItem("access_token");
       const body = {
         name: editValues.name,
-        email: editValues.email || null,
         phone: editValues.phone,
         address: editValues.address || "",
       };
@@ -129,7 +127,6 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
     <TableRow onClick={onClick} className="cursor-pointer">
       <TableCell>{formatCustomerId(customer.customer_id)}</TableCell>
       <TableCell className="font-medium">{customer.customer_name || customer.name}</TableCell>
-      <TableCell>{customer.email || customer.contact_email}</TableCell>
       <TableCell>{customer.phone}</TableCell>
       <TableCell>{customer.total_number_orders ?? 0}</TableCell>
       <TableCell>{formatCurrency(customer.total_spent ?? 0)}</TableCell>
@@ -217,23 +214,6 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="Enter customer name"
                         required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="edit-email"
-                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
-                      >
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        id="edit-email"
-                        value={editValues.email}
-                        onChange={handleInputChange}
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                        placeholder="Enter email address"
                       />
                     </div>
                     <div>

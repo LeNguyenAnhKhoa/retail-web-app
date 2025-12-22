@@ -4,9 +4,8 @@ from .GetUserDetailQuery import GetUserDetailQuery
 from .UpdateUserQuery import UpdateUserQuery
 from .LogoutQuery import LogoutQuery
 from .GetNewAccessTokenQuery import GetNewAccessTokenQuery
-from .GetAllWarehousesQuery import GetAllWarehousesQuery
-from .GetAllUsersQuery import GetAllUsersQuery
 from .ActivateUserQuery import ActivateUserQuery
+from .GetAllUsersQuery import GetAllUsersQuery
 from .DeactivateUserQuery import DeactivateUserQuery
 from .DashboardStatsQuery import DashboardStatsQuery
 from .MonthlySalesQuery import MonthlySalesQuery

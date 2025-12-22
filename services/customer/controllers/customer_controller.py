@@ -13,7 +13,7 @@ class CustomerController:
         if search and not isinstance(search, str):
             raise InvalidDataException("Search must be a string")
         if search:
-            result = self.db.execute_query(CustomerQueries.GET_ALL_CUSTOMERS_BY_SEARCH, (search, search, search))
+            result = self.db.execute_query(CustomerQueries.GET_ALL_CUSTOMERS_BY_SEARCH, (search, search))
         else:
             result = self.db.execute_query(CustomerQueries.GET_ALL_CUSTOMERS)
         self.db.close_pool()
@@ -22,13 +22,12 @@ class CustomerController:
             customer = {
                 "customer_id": row[0],
                 "name": row[1],
-                "email": row[2],
-                "phone": row[3],
-                "address": row[4],
-                "customer_updated_time": row[5],
-                "total_number_orders": row[6],
-                "total_spent": row[7],
-                "last_purchase_time": row[8],
+                "phone": row[2],
+                "address": row[3],
+                "total_number_orders": row[4],
+                "total_spent": row[5],
+                "last_purchase_time": row[6],
+                "customer_updated_time": row[8],
             }
             customers.append(customer)
         return customers
@@ -46,13 +45,12 @@ class CustomerController:
         customer = {
             "customer_id": row[0],
             "name": row[1],
-            "email": row[2],
-            "phone": row[3],
-            "address": row[4],
-            "customer_updated_time": row[5],
-            "total_number_orders": row[6],
-            "total_spent": row[7],
-            "last_purchase_time": row[8],
+            "phone": row[2],
+            "address": row[3],
+            "total_number_orders": row[4],
+            "total_spent": row[5],
+            "last_purchase_time": row[6],
+            "customer_updated_time": row[8],
         }
         return customer
         
@@ -76,7 +74,7 @@ class CustomerController:
         # Create new customer
         self.db.execute_query(
             CustomerQueries.CREATE_CUSTOMER,
-            (customer["name"], customer["email"], customer["phone"], customer.get("address", ""))
+            (customer["name"], customer["phone"], customer.get("address", ""))
         )
         self.db.close_pool()
         
@@ -95,21 +93,13 @@ class CustomerController:
         
         # Update only provided fields
         name = customer.name if customer.name is not None else current[1]
-        email = customer.email if customer.email is not None else current[2]
-        phone = customer.phone if customer.phone is not None else current[3]
-        address = customer.address if customer.address is not None else current[4]
-
-        # Check if new email already exists
-        if email != current[2]:
-            email_check = self.db.execute_query(CustomerQueries.GET_CUSTOMER_BY_EMAIL, (email,))
-            if email_check:
-                self.db.close_pool()
-                raise InvalidDataException("Email already registered")
+        phone = customer.phone if customer.phone is not None else current[2]
+        address = customer.address if customer.address is not None else current[3]
 
         # Update customer
         self.db.execute_query(
             CustomerQueries.UPDATE_CUSTOMER,
-            (name, email, phone, address, customer_id)
+            (name, phone, address, customer_id)
         )
 
         self.db.close_pool()
@@ -121,7 +111,7 @@ class CustomerController:
         if not existing:
             self.db.close_pool()
             raise NotFoundException(f"Customer with ID {customer_id} not found")
-        if existing[0][6] > 0:
+        if existing[0][4] > 0:
             self.db.close_pool()
             raise InvalidDataException("Cannot delete customer with existing orders")
         # Delete customer

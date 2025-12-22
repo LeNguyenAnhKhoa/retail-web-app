@@ -57,23 +57,15 @@ def get_new_access_token(refresh_token: str):
 
 @router.post("/activate-user", response_model=StandardResponse)
 @standard_response
-def activate_user(warehouse_id: int, user_id: int, user_info: dict = Depends(login_required)):
+def activate_user(user_id: int, user_info: dict = Depends(login_required)):
     controller = ActivateUserController()
-    controller.execute(warehouse_id, user_id, user_info)
+    controller.execute(user_id, user_info)
     return {}
 
 @router.get("/get-all-users", response_model=StandardResponse)
 @standard_response
 def get_all_users(user_info: dict = Depends(login_required)):
     controller = GetAllUsersController()
-    response = controller.execute(user_info)
-    return response
-
-
-@router.get("/get-all-warehouses", response_model=StandardResponse)
-@standard_response
-def get_all_warehouses(user_info: dict = Depends(login_required)):
-    controller = GetAllWarehousesController()
     response = controller.execute(user_info)
     return response
 

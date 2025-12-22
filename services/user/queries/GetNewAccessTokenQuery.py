@@ -9,8 +9,7 @@ class GetNewAccessTokenQuery:
         SELECT 
             users.user_id as user_id,
             users.email as email,
-            users.role_name as role_name,
-            users.warehouse_id as warehouse_id
+            users.role as role_name
         FROM login_logs
         LEFT JOIN users ON login_logs.user_id = users.user_id
         WHERE refresh_token = %s
@@ -24,8 +23,7 @@ class GetNewAccessTokenQuery:
         return {
             "user_id": res[0][0],
             "email": res[0][1],
-            "role_name": res[0][2],
-            "warehouse_id": res[0][3]
+            "role_name": res[0][2]
         }
 
     def close(self):

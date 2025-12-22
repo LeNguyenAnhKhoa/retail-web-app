@@ -1,13 +1,14 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class CategoryModel(BaseModel):
     category_id: int = Field(..., title="Category ID", description="Unique identifier for the category")
     name: str = Field(..., title="Category Name", description="Name of the category")
-    description: str = Field(None, title="Category Description", description="Description of the category")
+    description: Optional[str] = Field(None, title="Category Description", description="Description of the category")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "category_id": 1,
                 "name": "Electronics",
@@ -18,11 +19,11 @@ class CategoryModel(BaseModel):
         
 class CategoryCreateModel(BaseModel):
     name: str = Field(..., title="Category Name", description="Name of the category")
-    description: str = Field(None, title="Category Description", description="Description of the category")
+    description: Optional[str] = Field(None, title="Category Description", description="Description of the category")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "name": "Electronics",
                 "description": "Devices and gadgets"
@@ -30,12 +31,12 @@ class CategoryCreateModel(BaseModel):
         }
         
 class CategoryUpdateModel(BaseModel):
-    name: str = Field(None, title="Category Name", description="Name of the category")
-    description: str = Field(None, title="Category Description", description="Description of the category")
+    name: Optional[str] = Field(None, title="Category Name", description="Name of the category")
+    description: Optional[str] = Field(None, title="Category Description", description="Description of the category")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "name": "Updated Electronics",
                 "description": "Updated devices and gadgets"
@@ -45,11 +46,11 @@ class CategoryUpdateModel(BaseModel):
 class CategoryResponseModel(BaseModel):
     category_id: int = Field(..., title="Category ID", description="Unique identifier for the category")
     name: str = Field(..., title="Category Name", description="Name of the category")
-    description: str = Field(None, title="Category Description", description="Description of the category")
+    description: Optional[str] = Field(None, title="Category Description", description="Description of the category")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "category_id": 1,
                 "name": "Electronics",
@@ -61,8 +62,8 @@ class CategoryListResponseModel(BaseModel):
     categories: list[CategoryResponseModel] = Field(..., title="List of Categories", description="List of categories")
 
     class Config:
-        orm_mode = True
-        schema_extra = {
+        from_attributes = True
+        json_schema_extra = {
             "example": {
                 "categories": [
                     {

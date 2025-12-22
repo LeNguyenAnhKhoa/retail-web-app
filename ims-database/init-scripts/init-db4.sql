@@ -1,98 +1,239 @@
--- Indexes
--- Users Email Index
--- Rationale: Speeds up login queries and email-based lookups
-CREATE INDEX idx_users_email ON users(email);
+-- Indexes for new schema
 
--- Products Name Index
--- Rationale: Accelerates product searches by name
+-- Users indexes
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_is_active ON users(is_active);
+
+-- Products indexes
+CREATE INDEX idx_products_code ON products(code);
 CREATE INDEX idx_products_name ON products(name);
+CREATE INDEX idx_products_category ON products(category_id);
+CREATE INDEX idx_products_created_by ON products(created_by);
+CREATE INDEX idx_products_is_active ON products(is_active);
 
--- Orders Date Index
--- Rationale: Optimizes queries filtering orders by date
-CREATE INDEX idx_orders_date ON orders(order_date);
+-- Orders indexes
+CREATE INDEX idx_orders_code ON orders(code);
+CREATE INDEX idx_orders_customer ON orders(customer_id);
+CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_created_at ON orders(created_at);
+CREATE INDEX idx_orders_payment_method ON orders(payment_method);
 
--- Product Order Items Composite Index
--- Rationale: Enhances performance of joins involving product order items
-CREATE INDEX idx_poi_product_order ON product_order_items(product_id, order_item_id);
+-- Order details indexes
+CREATE INDEX idx_order_details_order ON order_details(order_id);
+CREATE INDEX idx_order_details_product ON order_details(product_id);
 
--- Customers Email Index
--- Rationale: Speeds up customer lookups by email
-CREATE INDEX idx_customers_email ON customers(email);
+-- Customers indexes
+CREATE INDEX idx_customers_phone ON customers(phone);
+CREATE INDEX idx_customers_name ON customers(name);
 
+-- Suppliers indexes
+CREATE INDEX idx_suppliers_name ON suppliers(name);
+CREATE INDEX idx_suppliers_phone ON suppliers(phone);
 
--- Procedure to Create a New Order with Items
+-- Categories indexes
+CREATE INDEX idx_categories_name ON categories(name);
+
+-- Inventory tickets indexes
+CREATE INDEX idx_inventory_tickets_code ON inventory_tickets(code);
+CREATE INDEX idx_inventory_tickets_type ON inventory_tickets(type);
+CREATE INDEX idx_inventory_tickets_supplier ON inventory_tickets(supplier_id);
+CREATE INDEX idx_inventory_tickets_user ON inventory_tickets(user_id);
+CREATE INDEX idx_inventory_tickets_created_at ON inventory_tickets(created_at);
+
+-- Inventory ticket details indexes
+CREATE INDEX idx_inventory_ticket_details_ticket ON inventory_ticket_details(ticket_id);
+CREATE INDEX idx_inventory_ticket_details_product ON inventory_ticket_details(product_id);
+
+-- Stored Procedures
+
+-- Procedure: Create Order with Details
 DELIMITER $$
 
-CREATE PROCEDURE CreateOrder(
+CREATE PROCEDURE CreateOrderWithDetails(
+    IN p_order_code VARCHAR(50),
     IN p_customer_id INT,
-    IN p_product_ids TEXT,    -- comma-separated product_ids, e.g. '1,2,3'
-    IN p_quantities TEXT,     -- comma-separated quantities, e.g. '2,1,5'
-    IN p_prices TEXT          -- comma-separated prices, e.g. '10.00,20.00,5.50'
+    IN p_user_id INT,
+    IN p_payment_method ENUM('CASH', 'TRANSFER', 'CARD'),
+    IN p_product_ids TEXT,      -- comma-separated: '1,2,3'
+    IN p_quantities TEXT,        -- comma-separated: '2,1,5'
+    IN p_unit_prices TEXT,       -- comma-separated: '10.00,20.00,5.50'
+    IN p_cost_prices TEXT        -- comma-separated: '8.00,15.00,4.00'
 )
 BEGIN
     DECLARE v_order_id INT;
+    DECLARE v_total_amount DECIMAL(10,2) DEFAULT 0;
     DECLARE i INT DEFAULT 1;
     DECLARE n INT;
-    DECLARE product_id INT;
-    DECLARE qty INT;
-    DECLARE price DECIMAL(10,2);
-
-    -- Insert new order
-    INSERT INTO orders (customer_id, status) VALUES (p_customer_id, 'pending');
-    SET v_order_id = LAST_INSERT_ID();
-
+    DECLARE v_product_id INT;
+    DECLARE v_quantity INT;
+    DECLARE v_unit_price DECIMAL(10,2);
+    DECLARE v_cost_price DECIMAL(10,2);
+    DECLARE v_line_total DECIMAL(10,2);
+    DECLARE v_stock INT;
+    
+    -- Start transaction
+    START TRANSACTION;
+    
+    -- Count number of items
     SET n = (LENGTH(p_product_ids) - LENGTH(REPLACE(p_product_ids, ',', '')) + 1);
-
+    
+    -- Calculate total amount and validate stock
     WHILE i <= n DO
-        SET product_id = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_product_ids, ',', i), ',', -1) AS UNSIGNED);
-        SET qty = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS UNSIGNED);
-        SET price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_prices, ',', i), ',', -1) AS DECIMAL(10,2));
-
-        -- Insert order item
-        INSERT INTO order_items (order_id) VALUES (v_order_id);
-        SET @order_item_id = LAST_INSERT_ID();
-
-        -- Insert product_order_item
-        INSERT INTO product_order_items (product_id, order_item_id, quantity, total_price)
-        VALUES (product_id, @order_item_id, qty, qty * price);
-
+        SET v_product_id = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_product_ids, ',', i), ',', -1) AS UNSIGNED);
+        SET v_quantity = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS UNSIGNED);
+        SET v_unit_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_unit_prices, ',', i), ',', -1) AS DECIMAL(10,2));
+        
+        -- Check stock
+        SELECT stock_quantity INTO v_stock FROM products WHERE product_id = v_product_id;
+        IF v_stock < v_quantity THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient stock';
+        END IF;
+        
+        SET v_line_total = v_quantity * v_unit_price;
+        SET v_total_amount = v_total_amount + v_line_total;
         SET i = i + 1;
     END WHILE;
+    
+    -- Insert order
+    INSERT INTO orders (code, customer_id, user_id, total_amount, payment_method, status)
+    VALUES (p_order_code, p_customer_id, p_user_id, v_total_amount, p_payment_method, 'COMPLETED');
+    
+    SET v_order_id = LAST_INSERT_ID();
+    
+    -- Insert order details and update stock
+    SET i = 1;
+    WHILE i <= n DO
+        SET v_product_id = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_product_ids, ',', i), ',', -1) AS UNSIGNED);
+        SET v_quantity = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS UNSIGNED);
+        SET v_unit_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_unit_prices, ',', i), ',', -1) AS DECIMAL(10,2));
+        SET v_cost_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_cost_prices, ',', i), ',', -1) AS DECIMAL(10,2));
+        
+        -- Insert order detail
+        INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price)
+        VALUES (v_order_id, v_product_id, v_quantity, v_unit_price, v_cost_price);
+        
+        -- Update product stock
+        UPDATE products SET stock_quantity = stock_quantity - v_quantity WHERE product_id = v_product_id;
+        
+        SET i = i + 1;
+    END WHILE;
+    
+    COMMIT;
+    SELECT v_order_id AS order_id, v_total_amount AS total_amount;
 END$$
 
 DELIMITER ;
 
--- Procedure to Update Product Quantity Stock
+-- Procedure: Create Inventory Ticket with Details
 DELIMITER $$
 
-CREATE PROCEDURE UpdateProductQuantity(
-    IN p_product_id INT,
-    IN p_quantity_change INT  -- positive to add stock, negative to reduce
+CREATE PROCEDURE CreateInventoryTicketWithDetails(
+    IN p_ticket_code VARCHAR(50),
+    IN p_type ENUM('IMPORT', 'EXPORT_CANCEL', 'STOCK_CHECK'),
+    IN p_supplier_id INT,
+    IN p_user_id INT,
+    IN p_note TEXT,
+    IN p_product_ids TEXT,     -- comma-separated
+    IN p_quantities TEXT,       -- comma-separated (positive for IMPORT, negative for EXPORT_CANCEL)
+    IN p_prices TEXT            -- comma-separated (only for IMPORT)
 )
 BEGIN
-    UPDATE products
-    SET quantity = quantity + p_quantity_change,
-        updated_time = CURRENT_TIMESTAMP
-    WHERE product_id = p_product_id;
-
-    -- Optional: you may want to add validation to prevent negative stock here
+    DECLARE v_ticket_id INT;
+    DECLARE i INT DEFAULT 1;
+    DECLARE n INT;
+    DECLARE v_product_id INT;
+    DECLARE v_quantity INT;
+    DECLARE v_price DECIMAL(10,2);
+    
+    -- Start transaction
+    START TRANSACTION;
+    
+    -- Insert ticket
+    INSERT INTO inventory_tickets (code, type, supplier_id, user_id, note)
+    VALUES (p_ticket_code, p_type, p_supplier_id, p_user_id, p_note);
+    
+    SET v_ticket_id = LAST_INSERT_ID();
+    
+    -- Count number of items
+    SET n = (LENGTH(p_product_ids) - LENGTH(REPLACE(p_product_ids, ',', '')) + 1);
+    
+    -- Insert ticket details and update stock
+    WHILE i <= n DO
+        SET v_product_id = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_product_ids, ',', i), ',', -1) AS UNSIGNED);
+        SET v_quantity = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS SIGNED);
+        
+        IF p_prices IS NOT NULL AND p_prices != '' THEN
+            SET v_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_prices, ',', i), ',', -1) AS DECIMAL(10,2));
+        ELSE
+            SET v_price = NULL;
+        END IF;
+        
+        -- Insert ticket detail
+        INSERT INTO inventory_ticket_details (ticket_id, product_id, quantity, price)
+        VALUES (v_ticket_id, v_product_id, v_quantity, v_price);
+        
+        -- Update product stock
+        UPDATE products SET stock_quantity = stock_quantity + v_quantity WHERE product_id = v_product_id;
+        
+        -- Update import price if it's an import ticket
+        IF p_type = 'IMPORT' AND v_price IS NOT NULL THEN
+            UPDATE products SET import_price = v_price WHERE product_id = v_product_id;
+        END IF;
+        
+        SET i = i + 1;
+    END WHILE;
+    
+    COMMIT;
+    SELECT v_ticket_id AS ticket_id;
 END$$
 
 DELIMITER ;
 
--- Triggers
--- Trigger to update product quantity after inserting into product_order_items
--- This trigger ensures that the product quantity is decremented when a new order item is added.
+-- Function: Calculate Revenue by Date Range
 DELIMITER $$
 
-CREATE TRIGGER trg_after_insert_product_order_items
-AFTER INSERT ON product_order_items
-FOR EACH ROW
+CREATE FUNCTION GetRevenueByDateRange(
+    p_start_date DATE,
+    p_end_date DATE
+)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+READS SQL DATA
 BEGIN
-    UPDATE products
-    SET quantity = quantity - NEW.quantity,
-        updated_time = CURRENT_TIMESTAMP
-    WHERE product_id = NEW.product_id;
+    DECLARE v_revenue DECIMAL(10,2);
+    
+    SELECT COALESCE(SUM(total_amount), 0) INTO v_revenue
+    FROM orders
+    WHERE status = 'COMPLETED'
+        AND DATE(created_at) BETWEEN p_start_date AND p_end_date;
+    
+    RETURN v_revenue;
+END$$
+
+DELIMITER ;
+
+-- Function: Calculate Profit by Date Range
+DELIMITER $$
+
+CREATE FUNCTION GetProfitByDateRange(
+    p_start_date DATE,
+    p_end_date DATE
+)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE v_profit DECIMAL(10,2);
+    
+    SELECT COALESCE(SUM(od.quantity * (od.unit_price - od.cost_price)), 0) INTO v_profit
+    FROM orders o
+    INNER JOIN order_details od ON o.order_id = od.order_id
+    WHERE o.status = 'COMPLETED'
+        AND DATE(o.created_at) BETWEEN p_start_date AND p_end_date;
+    
+    RETURN v_profit;
 END$$
 
 DELIMITER ;

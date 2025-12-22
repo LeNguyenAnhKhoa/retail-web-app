@@ -7,34 +7,42 @@ class OrderResponse(BaseModel):
     data: Union[Dict[str, Any], List[Dict[str, Any]]]
     message: str
 
-class OrderItemData(BaseModel):
+class OrderDetailData(BaseModel):
     product_id: int
     quantity: int
-    price: float  # Unit price
+    unit_price: float
+    cost_price: float
 
-class OrderData(BaseModel):
-    customer_id: int
-    items: List[OrderItemData]
-    status: str = "pending"  # pending, completed, cancelled
+class OrderCreateData(BaseModel):
+    code: str
+    customer_id: Optional[int] = None
+    user_id: int
+    payment_method: str = "CASH"  # CASH, TRANSFER, CARD
+    status: str = "COMPLETED"
+    details: List[OrderDetailData]
 
-class ProductOrderItem(BaseModel):
-    order_item_id: int
-    product_id: int
-    quantity: int
-    total_price: float
-
-class OrderItem(BaseModel):
-    order_item_id: int
+class OrderDetail(BaseModel):
+    id: int
     order_id: int
-    created_time: datetime
-    updated_time: datetime
-    products: List[ProductOrderItem]
+    product_id: int
+    product_name: str
+    quantity: int
+    unit_price: float
+    cost_price: float
+    created_at: datetime
+    updated_at: datetime
 
 class Order(BaseModel):
     order_id: int
-    customer_id: int
+    code: str
+    customer_id: Optional[int]
+    customer_name: Optional[str]
+    user_id: int
+    staff_name: str
+    total_amount: float
+    payment_method: str
     status: str
-    order_date: datetime
-    created_time: datetime
-    updated_time: datetime
-    items: List[Dict[str, Any]] 
+    created_at: datetime
+    updated_at: datetime
+    details: List[OrderDetail] = []
+ 

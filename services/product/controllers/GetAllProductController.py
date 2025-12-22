@@ -14,16 +14,16 @@ class GetAllProductController:
         if limit > 100:
             raise InvalidDataException("Limit 100 product max per request")
         
-        role_name = user_info.get("role_name")
+        role_name = user_info.get("role_name", "").lower()
         user_id = user_info.get("user_id")
         
-        if role_name not in ("admin", "staff"):
+        if role_name not in ("admin", "staff", "manager", "stockkeeper"):
             raise InvalidDataException("User role invalid")
 
-        if role_name == "admin":
+        if role_name in ("admin", "manager"):
             response = self.query.get_all_products_by_admin(params=(limit, offset), search=search)
             self.query.close()
-        elif role_name == "staff":
+        elif role_name in ("staff", "stockkeeper"):
             response = self.query.get_all_product_by_user(user_id, params=(limit, offset), search=search)
             self.query.close()
 

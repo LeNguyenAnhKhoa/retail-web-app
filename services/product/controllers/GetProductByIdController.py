@@ -14,17 +14,20 @@ class GetProductByIdController:
         self.query.close()
         if not response:
             raise NotFoundException("Product not found")
-        # Convert Decimal to float for price if needed
-        price = float(response.get("price")) if response.get("price") is not None else None
+        
         return ProductModel(
             product_id=response.get("product_id"),
+            code=response.get("code"),
             name=response.get("name"),
-            description=response.get("description"),
-            price=price,
-            quantity=response.get("quantity"),
+            category_id=response.get("category_id"),
+            category_name=response.get("category_name"),
+            unit=response.get("unit"),
+            import_price=response.get("import_price"),
+            selling_price=response.get("selling_price"),
+            stock_quantity=response.get("stock_quantity"),
             image_url=response.get("image_url"),
-            category={"name": response.get("category_name")},
-            supplier={"name": response.get("supplier_name")},
-            warehouse={"name": response.get("warehouse_name")}
+            is_active=response.get("is_active"),
+            description=response.get("description"),
+            created_by=response.get("created_by")
         )
 
