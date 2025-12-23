@@ -89,3 +89,10 @@ def get_monthly_sales(user_info: dict = Depends(login_required)):
     controller = MonthlySalesController()
     response = controller.execute(user_info)
     return response
+
+@router.delete("/delete-user", response_model=StandardResponse)
+@standard_response
+def delete_user(user_id: int, user_info: dict = Depends(login_required)):
+    controller = DeleteUserController()
+    controller.execute(user_id, user_info)
+    return {}

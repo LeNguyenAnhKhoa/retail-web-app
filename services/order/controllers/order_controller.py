@@ -5,6 +5,8 @@ from models.order import OrderResponse, OrderCreateData, OrderDetailData, Order,
 from typing import Dict, List
 from shared_utils.logger import logger
 from shared_config.custom_exception import BadRequestException, NotFoundException
+import datetime
+import uuid
 
 class OrderController:
     def __init__(self):
@@ -66,7 +68,6 @@ class OrderController:
             result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS_WITH_SEARCH, (search_param, search_param))
         else:
             result = self.db.execute_query(OrderQueries.GET_ALL_ORDERS)
-        self.db.close_pool()
         if result is None:
             raise Exception("Failed to retrieve orders from the database")
         
@@ -137,7 +138,14 @@ class OrderController:
             return {}
         return order_data
 
-    def create_order(self, order: dict):
+    def create_order(self, order: dict, user_info: dict):
+        user_id = user_info.get("user_id")
+        if not user_id:
+            raise BadRequestException("User ID is required")
+
+        # Generate order code
+        order_code = f"ORD-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
         product_ids = []
         quantities = []
         prices = []
@@ -146,23 +154,47 @@ class OrderController:
             product_ids.append(str(item["product_id"]))
             quantities.append(str(item["quantity"]))
             prices.append(str(item["price"]))
+            
+        if not product_ids:
+             raise BadRequestException("No items in order")
+
+        # Fetch cost prices (import_price) for products
+        placeholders = ','.join(['%s'] * len(product_ids))
+        query = f"SELECT product_id, import_price FROM products WHERE product_id IN ({placeholders})"
+        
+        products_result = self.db.execute_query(query, tuple(product_ids))
+        if not products_result:
+             raise BadRequestException("Products not found")
+             
+        cost_map = {str(row[0]): row[1] for row in products_result}
+        
+        cost_prices = []
+        for pid in product_ids:
+            cost = cost_map.get(pid)
+            if cost is None:
+                raise BadRequestException(f"Product {pid} not found")
+            cost_prices.append(str(cost))
         
         # Convert lists to comma-separated strings
         product_ids_str = ','.join(product_ids)
         quantities_str = ','.join(quantities)
         prices_str = ','.join(prices)
+        cost_prices_str = ','.join(cost_prices)
         
-        logger.info(f"Calling CreateOrder procedure with: customer_id={order['customer_id']}, "
+        logger.info(f"Calling CreateOrderWithDetails procedure with: customer_id={order['customer_id']}, "
                     f"product_ids={product_ids_str}, quantities={quantities_str}, prices={prices_str}")
         
         # Call the CreateOrder stored procedure
         res = self.db.execute_query(OrderQueries.CREATE_ORDER_PROCEDURE, (
+            order_code,
             order["customer_id"],
+            user_id,
+            order.get("payment_method", "CASH"),
             product_ids_str,
             quantities_str,
-            prices_str
+            prices_str,
+            cost_prices_str
         ))
-        self.db.close_pool()
         if res is None:
             logger.error("Failed to create order in the database")
             raise Exception("Failed to create order in the database")
@@ -170,7 +202,7 @@ class OrderController:
         return {}
       
 
-    def update_order(self, order_id: int, order: OrderCreateData):
+    def update_order(self, order_id: int, order: OrderCreateData, user_info: dict = None):
         result = self.db.execute_query(OrderQueries.GET_ORDER_BY_ID, (order_id,))
         if not result:
             raise NotFoundException(f"Order with ID {order_id} not found")
@@ -217,12 +249,10 @@ class OrderController:
         res = self.db.execute_query(OrderQueries.DELETE_ORDER_ITEMS, (order_id,))
         logger.info(f"Deleted all items for order {order_id}")
         if res is None:
-            self.db.close_pool()
             raise Exception("Failed to delete order items from the database")
         # Finally delete the order
         res = self.db.execute_query(OrderQueries.DELETE_ORDER, (order_id,))
         logger.info(f"Deleted order {order_id}")
-        self.db.close_pool()
         if res is None:
             raise Exception("Failed to delete order from the database")
 
@@ -239,7 +269,6 @@ class OrderController:
         # Check if order exists and get current status
         check_result = self.db.execute_query("SELECT status FROM orders WHERE order_id = %s", (order_id,))
         if not check_result:
-            self.db.close_pool()
             raise NotFoundException("Order does not exist")
         
         current_status = check_result[0][0]
@@ -263,12 +292,10 @@ class OrderController:
                     
                     if restore_result is None:
                         logger.error(f"Failed to restore quantity for product {product_id}")
-                        self.db.close_pool()
                         raise Exception(f"Failed to restore stock quantity for product {product_id}")
         
         # Update the order status
         result = self.db.execute_query(OrderQueries.UPDATE_ORDER_STATUS, (status, order_id))
-        self.db.close_pool()
         
         if result is None:
             raise Exception("Failed to update order status")
@@ -289,8 +316,6 @@ class OrderController:
             result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS)
         else:  # staff, stockkeeper
             result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS_BY_USER, (user_id,))
-        
-        self.db.close_pool()
         
         if result is None:
             raise Exception("Failed to retrieve recent completed orders from the database")

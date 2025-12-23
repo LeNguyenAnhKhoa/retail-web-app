@@ -44,7 +44,7 @@ SELECT
     s.updated_at
 FROM 
     suppliers s
-    LEFT JOIN products p ON s.supplier_id = p.supplier_id
+    LEFT JOIN products p ON s.supplier_id = p.supplier_id AND p.is_active = TRUE
 GROUP BY 
     s.supplier_id, s.name, s.contact_name, s.phone, s.address, s.email, s.created_at, s.updated_at;
 

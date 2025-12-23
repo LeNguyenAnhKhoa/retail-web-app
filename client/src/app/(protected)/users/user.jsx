@@ -83,6 +83,43 @@ export function User({ user, setError, setShowAlert }) {
       }, 3000);
     }
   };
+
+  const deleteUser = async () => {
+    try {
+      const access_token = localStorage.getItem("access_token");
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/delete-user?user_id=${user.user_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message);
+        setShowAlert(true);
+        setTimeout(() => {
+          setShowAlert(false);
+        }, 3000);
+        return;
+      }
+      
+      // Reload the page to reflect changes
+      window.location.reload();
+    } catch (error) {
+      setError("Error deleting account");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
+    }
+  };
+
   function formatUserID(id) {
     return `U${id.toString().padStart(4, "0")}`;
   }
@@ -107,7 +144,7 @@ export function User({ user, setError, setShowAlert }) {
           variant="outline"
           className={cn(
             "capitalize",
-            user.role_name === "admin"
+            user.role_name === "MANAGER"
               ? "border-gray-500 text-gray-500"
               : "border-blue-500 text-blue-500"
           )}
@@ -144,6 +181,11 @@ export function User({ user, setError, setShowAlert }) {
             <DropdownMenuItem>
               <button type="submit" onClick={deactivateUser}>
                 Deactivate
+              </button>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <button type="submit" onClick={deleteUser} className="text-red-600">
+                Delete
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>

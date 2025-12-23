@@ -13,13 +13,16 @@ class OrderDetailData(BaseModel):
     unit_price: float
     cost_price: float
 
+class OrderItemRequest(BaseModel):
+    product_id: int
+    quantity: int
+    price: float
+
 class OrderCreateData(BaseModel):
-    code: str
     customer_id: Optional[int] = None
-    user_id: int
-    payment_method: str = "CASH"  # CASH, TRANSFER, CARD
-    status: str = "COMPLETED"
-    details: List[OrderDetailData]
+    items: List[OrderItemRequest]
+    status: str = "pending"
+    payment_method: str = "CASH"
 
 class OrderDetail(BaseModel):
     id: int

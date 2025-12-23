@@ -34,7 +34,7 @@ def get_product(product_id: int, user_info: dict = Depends(login_required)):
 @standard_response
 def create_product(product: ProductCreateModel, user_info: dict = Depends(login_required)):
     controller = CreateProductController()
-    controller.execute(product)
+    controller.execute(product, user_info)
     return {}
 
 

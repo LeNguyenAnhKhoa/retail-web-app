@@ -25,12 +25,23 @@ class UpdateProductQuery:
         if updated_product.description is not None:
             fields.append("description = %s")
             params.append(updated_product.description)
+        
+        # Handle price (simple input) or selling_price (complex input)
         if updated_product.price is not None:
-            fields.append("price = %s")
+            fields.append("selling_price = %s")
             params.append(updated_product.price)
+        elif updated_product.selling_price is not None:
+            fields.append("selling_price = %s")
+            params.append(updated_product.selling_price)
+            
+        # Handle quantity (simple input) or stock_quantity (complex input)
         if updated_product.quantity is not None:
-            fields.append("quantity = %s")
+            fields.append("stock_quantity = %s")
             params.append(updated_product.quantity)
+        elif updated_product.stock_quantity is not None:
+            fields.append("stock_quantity = %s")
+            params.append(updated_product.stock_quantity)
+            
         if updated_product.image_url is not None:
             fields.append("image_url = %s")
             params.append(updated_product.image_url)
@@ -40,6 +51,9 @@ class UpdateProductQuery:
         if updated_product.supplier_id is not None:
             fields.append("supplier_id = %s")
             params.append(updated_product.supplier_id)
+        if updated_product.is_active is not None:
+            fields.append("is_active = %s")
+            params.append(updated_product.is_active)
         
         if not fields:
             return False  # Nothing to update

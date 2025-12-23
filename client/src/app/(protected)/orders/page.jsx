@@ -102,16 +102,16 @@ function SearchableProductSelector({
                         {product.name}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-300">
-                        Price: ${product.price}
+                        Price: ${product.selling_price}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Stock: {product.quantity || 0}
+                        Stock: {product.stock_quantity || 0}
                       </div>
-                      {(product.quantity || 0) <= 10 && (
+                      {(product.stock_quantity || 0) <= 10 && (
                         <div className="text-xs text-red-600 dark:text-red-400">
-                          {product.quantity === 0 ? 'Out of stock' : 'Low stock'}
+                          {product.stock_quantity === 0 ? 'Out of stock' : 'Low stock'}
                         </div>
                       )}
                     </div>
@@ -350,9 +350,9 @@ function OrdersPageContent() {
     updatedItems[itemIndex] = {
       ...updatedItems[itemIndex],
       product_id: product.product_id,
-      price: product.price,
+      price: product.selling_price,
       selectedProduct: product,
-      quantity: Math.min(updatedItems[itemIndex].quantity, product.quantity || 1)
+      quantity: Math.min(updatedItems[itemIndex].quantity, product.stock_quantity || 1)
     };
     
     setAddValues(prev => ({ ...prev, items: updatedItems }));
@@ -388,7 +388,7 @@ function OrdersPageContent() {
     
     // If quantity changes, validate against stock
     if (field === 'quantity' && updatedItems[index].selectedProduct) {
-      const maxQuantity = updatedItems[index].selectedProduct.quantity || 0;
+      const maxQuantity = updatedItems[index].selectedProduct.stock_quantity || 0;
       if (value > maxQuantity) {
         setError(`Only ${maxQuantity} units available in stock`);
         setShowAlert(true);
@@ -460,7 +460,7 @@ function OrdersPageContent() {
 
       // Validate stock quantities
       for (const item of validItems) {
-        const availableStock = item.selectedProduct?.quantity || 0;
+        const availableStock = item.selectedProduct?.stock_quantity || 0;
         if (item.quantity > availableStock) {
           setError(`Insufficient stock for ${item.selectedProduct.name}. Available: ${availableStock}, Requested: ${item.quantity}`);
           setShowAlert(true);
@@ -751,20 +751,20 @@ function OrdersPageContent() {
                               Quantity
                               {item.selectedProduct && (
                                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                  (Max: {item.selectedProduct.quantity || 0})
+                                  (Max: {item.selectedProduct.stock_quantity || 0})
                                 </span>
                               )}
                             </label>
                             <input
                               type="number"
                               min="1"
-                              max={item.selectedProduct?.quantity || 999}
+                              max={item.selectedProduct?.stock_quantity || 999}
                               value={item.quantity}
                               onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                               required
                             />
-                            {item.selectedProduct && item.quantity > (item.selectedProduct.quantity || 0) && (
+                            {item.selectedProduct && item.quantity > (item.selectedProduct.stock_quantity || 0) && (
                               <div className="text-xs text-red-600 dark:text-red-400 mt-1">
                                 Exceeds available stock
                               </div>
@@ -807,10 +807,10 @@ function OrdersPageContent() {
                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-500 flex justify-between items-center">
                           {item.selectedProduct && (
                             <div className="text-sm text-gray-600 dark:text-gray-300">
-                              Stock Available: <span className="font-medium">{item.selectedProduct.quantity || 0}</span> units
-                              {(item.selectedProduct.quantity || 0) <= 10 && (
+                              Stock Available: <span className="font-medium">{item.selectedProduct.stock_quantity || 0}</span> units
+                              {(item.selectedProduct.stock_quantity || 0) <= 10 && (
                                 <span className="text-red-600 dark:text-red-400 ml-2">
-                                  {item.selectedProduct.quantity === 0 ? '(Out of stock)' : '(Low stock)'}
+                                  {item.selectedProduct.stock_quantity === 0 ? '(Out of stock)' : '(Low stock)'}
                                 </span>
                               )}
                             </div>

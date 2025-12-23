@@ -135,7 +135,6 @@ export function Supplier({ supplier, setError, setShowAlert }) {
   };
 
   return (
-    <>
       <TableRow>
         <TableCell>{formatSupplierId(supplier.supplier_id)}</TableCell>
         <TableCell className="font-medium">{crop(supplier.supplier_name, 12)}</TableCell>
@@ -168,10 +167,7 @@ export function Supplier({ supplier, setError, setShowAlert }) {
               <DropdownMenuItem onClick={handleDeleteSupplier}>Delete supplier</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </TableCell>
-      </TableRow>
-
-      {showModal && (
+        {showModal && (
         <div
           id="edit-modal"
           tabIndex={-1}
@@ -270,6 +266,7 @@ export function Supplier({ supplier, setError, setShowAlert }) {
           </div>
         </div>
       )}
-    </>
+      </TableCell>
+    </TableRow>
   );
 }

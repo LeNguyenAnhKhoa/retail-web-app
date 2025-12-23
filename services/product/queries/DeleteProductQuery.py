@@ -17,7 +17,8 @@ class DeleteProductQuery:
         
         # delete the product
         query = """
-        DELETE FROM products
+        UPDATE products
+        SET is_active = FALSE
         WHERE product_id = %s;
         """
         

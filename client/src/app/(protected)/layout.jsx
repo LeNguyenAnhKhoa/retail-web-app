@@ -98,7 +98,7 @@ function DesktopNav() {
           <Contact className="h-5 w-5" />
         </NavItem>
 
-        {user?.role_name === "admin" && (
+        {user?.role_name === "MANAGER" && (
           <NavItem href="/users" label="Users">
             <Users className="h-5 w-5" />
           </NavItem>
@@ -173,7 +173,7 @@ function MobileNav() {
             Customers
           </Link>
 
-          {user?.role_name === "admin" && (
+          {user?.role_name === "MANAGER" && (
             <Link href="/users" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
               <Users className="h-5 w-5" />
               Users

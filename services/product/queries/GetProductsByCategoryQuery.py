@@ -6,10 +6,10 @@ class GetProductsByCategoryQuery:
         
     def execute(self, category_id: int):
         query = """
-            SELECT p.product_id, p.name, p.description, p.price, c.name AS category_name
+            SELECT p.product_id, p.name, p.description, p.selling_price, c.name AS category_name
             FROM products p
             JOIN categories c ON p.category_id = c.category_id
-            WHERE c.category_id = %s
+            WHERE c.category_id = %s AND p.is_active = TRUE
         """
         params = (category_id,)
         result = self.db.execute_query(query, params)

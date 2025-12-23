@@ -173,10 +173,16 @@ class SupplierController:
             self.db.close_pool()
             raise NotFoundException(f"Supplier with ID {supplier_id} not found")
 
-        if existing[0][6] and existing[0][6] > 0:
+        # Check for active products
+        active_products_count = self.db.execute_query(SupplierQueries.COUNT_ACTIVE_PRODUCTS_BY_SUPPLIER_ID, (supplier_id,))
+        if active_products_count and active_products_count[0][0] > 0:
             self.db.close_pool()
             raise InvalidDataException("Cannot delete supplier with existing products")
        
+        # Nullify references in other tables to avoid foreign key constraints
+        self.db.execute_query(SupplierQueries.NULLIFY_PRODUCT_SUPPLIER, (supplier_id,))
+        self.db.execute_query(SupplierQueries.NULLIFY_INVENTORY_TICKET_SUPPLIER, (supplier_id,))
+
         # Delete supplier
         res = self.db.execute_query(SupplierQueries.DELETE_SUPPLIER, (supplier_id,))
         self.db.close_pool()

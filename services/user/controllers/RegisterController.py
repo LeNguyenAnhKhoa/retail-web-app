@@ -17,13 +17,14 @@ class RegisterController:
         email = payload.email
         password = payload.password
         username = payload.username
+        phone = payload.phone
         
         # Email must be valid type
-        if not email or not password or not username:
+        if not email or not password or not username or not phone:
             self.query.close()
             raise InvalidDataException("Invalid payload")
 
-        if not isinstance(email, str) or not isinstance(password, str) or not isinstance(username, str):
+        if not isinstance(email, str) or not isinstance(password, str) or not isinstance(username, str) or not isinstance(phone, str):
             self.query.close()
             raise InvalidDataException("Invalid payload")
 
@@ -44,6 +45,11 @@ class RegisterController:
         if not re.match(r"^[A-Za-z0-9]{3,}$", username):
             self.query.close()
             raise InvalidDataException("Invalid username")
+            
+        # Must be a valid phone number
+        if not re.match(r"^\d{10,11}$", phone):
+            self.query.close()
+            raise InvalidDataException("Invalid phone number")
         
         res = self.query.check_email_exists(email)
         if res:

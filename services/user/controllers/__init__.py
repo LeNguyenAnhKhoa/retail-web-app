@@ -9,3 +9,4 @@ from .GetAllUsersController import GetAllUsersController
 from .DeactivateUserController import DeactivateUserController
 from .DashboardStatsController import DashboardStatsController
 from .MonthlySalesController import MonthlySalesController
+from .DeleteUserController import DeleteUserController

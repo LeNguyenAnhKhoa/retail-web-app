@@ -35,7 +35,6 @@ def health_check():
     # Check database connection
     db = Database()
     db.execute_query("SELECT 1")
-    db.close_pool()
     # Check cache connection
     Cache()
     return f"{SERVICE_NAME} service is running with version {APP_VERSION}"
