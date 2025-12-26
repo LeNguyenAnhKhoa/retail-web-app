@@ -52,6 +52,9 @@ export function SupplierTable({ products, offset, setOffset, totalProducts, limi
             <div>
               <span className="font-semibold text-muted-foreground">Phone:</span> {supplier.phone}
             </div>
+            <div>
+              <span className="font-semibold text-muted-foreground">Address:</span> {supplier.address}
+            </div>
           </div>
         )}
         <CardDescription>

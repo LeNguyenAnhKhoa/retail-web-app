@@ -293,6 +293,27 @@ class OrderController:
                     if restore_result is None:
                         logger.error(f"Failed to restore quantity for product {product_id}")
                         raise Exception(f"Failed to restore stock quantity for product {product_id}")
+
+        # If reactivating a cancelled order, deduct stock quantities
+        elif current_status.lower() == "cancelled" and status.lower() != "cancelled":
+            logger.info(f"Reactivating order {order_id}, deducting stock quantities")
+            
+            # Get all order items with their quantities
+            order_items_result = self.db.execute_query(OrderQueries.GET_ORDER_ITEMS_FOR_CANCELLATION, (order_id,))
+            
+            if order_items_result:
+                # For each product in the order, deduct the quantity
+                for row in order_items_result:
+                    product_id = row[0]
+                    quantity = row[1]
+                    
+                    # Call UpdateProductQuantity procedure to deduct the quantity (pass negative value)
+                    logger.info(f"Deducting {quantity} units for product {product_id}")
+                    restore_result = self.db.execute_query(OrderQueries.UPDATE_PRODUCT_QUANTITY_PROCEDURE, (product_id, -quantity))
+                    
+                    if restore_result is None:
+                        logger.error(f"Failed to deduct quantity for product {product_id}")
+                        raise Exception(f"Failed to deduct stock quantity for product {product_id}")
         
         # Update the order status
         result = self.db.execute_query(OrderQueries.UPDATE_ORDER_STATUS, (status, order_id))

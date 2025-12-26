@@ -45,13 +45,13 @@ class SupplierQueries:
     """
 
     CREATE_SUPPLIER = """
-        INSERT INTO suppliers (name, contact_name, email, phone)
-        VALUES (%s, %s, %s, %s);
+        INSERT INTO suppliers (name, contact_name, email, phone, address)
+        VALUES (%s, %s, %s, %s, %s);
     """
     
     UPDATE_SUPPLIER = """
         UPDATE suppliers
-        SET name = %s, contact_name = %s, email = %s, phone = %s, updated_at = CURRENT_TIMESTAMP
+        SET name = %s, contact_name = %s, email = %s, phone = %s, address = %s, updated_at = CURRENT_TIMESTAMP
         WHERE supplier_id = %s;
     """
     

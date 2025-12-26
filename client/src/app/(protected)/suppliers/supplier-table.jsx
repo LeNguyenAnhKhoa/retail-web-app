@@ -58,6 +58,7 @@ export function SupplierTable({ suppliers, offset, setOffset, totalSuppliers, li
               <TableHead className="hidden md:table-cell">Contact Name</TableHead>
               <TableHead className="hidden md:table-cell">Contact Email</TableHead>
               <TableHead className="hidden md:table-cell">Phone</TableHead>
+              <TableHead className="hidden md:table-cell">Address</TableHead>
               <TableHead className="hidden md:table-cell">Total Products</TableHead>
               <TableHead className="hidden md:table-cell">Total Product Quantity</TableHead>
               <TableHead className="hidden md:table-cell">Avg Product Price</TableHead>

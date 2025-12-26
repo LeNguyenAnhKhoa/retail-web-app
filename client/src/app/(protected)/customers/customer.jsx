@@ -128,6 +128,7 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
       <TableCell>{formatCustomerId(customer.customer_id)}</TableCell>
       <TableCell className="font-medium">{customer.customer_name || customer.name}</TableCell>
       <TableCell>{customer.phone}</TableCell>
+      <TableCell>{customer.address || "N/A"}</TableCell>
       <TableCell>{customer.total_number_orders ?? 0}</TableCell>
       <TableCell>{formatCurrency(customer.total_spent ?? 0)}</TableCell>
       <TableCell>{formatDate(customer.last_purchase_time)}</TableCell>
@@ -232,6 +233,23 @@ export function Customer({ customer, onClick, setError, setShowAlert }) {
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="Enter phone number"
                         required
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="edit-address"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Address
+                      </label>
+                      <input
+                        type="text"
+                        name="address"
+                        id="edit-address"
+                        value={editValues.address}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="Enter address"
                       />
                     </div>
                   </div>

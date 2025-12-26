@@ -23,6 +23,7 @@ export function Supplier({ supplier, setError, setShowAlert }) {
     contact_email: supplier.contact_email || "",
     email: supplier.email || "",
     phone: supplier.phone || "",
+    address: supplier.address || "",
   });
 
   function handleInputChange(e) {
@@ -73,7 +74,7 @@ export function Supplier({ supplier, setError, setShowAlert }) {
         contact_email: editValues.contact_email || null,
         email: editValues.email || null,
         phone: editValues.phone,
-        address: supplier.address || "", // Keep existing address
+        address: editValues.address || null,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/supplier/update-supplier/${supplier.supplier_id}`,
@@ -141,6 +142,7 @@ export function Supplier({ supplier, setError, setShowAlert }) {
         <TableCell className="hidden md:table-cell">{crop(supplier.contact_name, 12)}</TableCell>
         <TableCell className="hidden md:table-cell">{crop(supplier.contact_email, 18)}</TableCell>
         <TableCell className="hidden md:table-cell">{supplier.phone || "N/A"}</TableCell>
+        <TableCell className="hidden md:table-cell">{crop(supplier.address, 20)}</TableCell>
         <TableCell className="hidden md:table-cell">{supplier.total_products ?? 0}</TableCell>
         <TableCell className="hidden md:table-cell">{supplier.total_product_quantity ?? 0}</TableCell>
         <TableCell className="hidden md:table-cell">{formatAvgPrice(supplier.avg_product_price)}</TableCell>
@@ -249,6 +251,20 @@ export function Supplier({ supplier, setError, setShowAlert }) {
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
                       placeholder="Enter phone number" 
                       required 
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="address" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Address
+                    </label>
+                    <input 
+                      type="text" 
+                      name="address" 
+                      id="address" 
+                      value={editValues.address} 
+                      onChange={handleInputChange} 
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                      placeholder="Enter address" 
                     />
                   </div>
                 </div>

@@ -66,7 +66,7 @@ JWT_ALGORITHM=HS256
 
 Dùng MySQL Workbench:
 1. Tạo database mới: `ims_database`
-2. Chạy lần lượt 4 file SQL trong `ims-database/init-scripts/`
+2. Chạy lần lượt 5 file SQL trong `ims-database/init-scripts/`
 
 ---
 

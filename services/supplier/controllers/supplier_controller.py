@@ -42,6 +42,7 @@ class SupplierController:
                 "contact_name": row[2],
                 "contact_email": row[5],
                 "phone": row[3],
+                "address": row[4],
                 "total_products": row[6],
                 "total_product_quantity": row[7],
                 "avg_product_price": row[8],
@@ -114,6 +115,7 @@ class SupplierController:
         contact_email = supplier.get("contact_email")
         contact_name = supplier.get("contact_name")
         phone = supplier.get("phone")
+        address = supplier.get("address")
         
         # at least one of contact_email or phone must be provided
         if not contact_email and not phone:
@@ -124,7 +126,7 @@ class SupplierController:
         # Create new supplier
         res = self.db.execute_query(
             SupplierQueries.CREATE_SUPPLIER,
-            (name, contact_name, contact_email, phone)
+            (name, contact_name, contact_email, phone, address)
         )
         self.db.close_pool()
         if  res:
@@ -150,14 +152,15 @@ class SupplierController:
         if contact_email is None and supplier.email is not None:
             contact_email = supplier.email
         if contact_email is None:
-            contact_email = current[3]
+            contact_email = current[5]
             
-        phone = supplier.phone if supplier.phone is not None else current[4]
+        phone = supplier.phone if supplier.phone is not None else current[3]
+        address = supplier.address if supplier.address is not None else current[4]
 
         # Update supplier
         res = self.db.execute_query(
             SupplierQueries.UPDATE_SUPPLIER,
-            (name, contact_name, contact_email, phone, supplier_id)
+            (name, contact_name, contact_email, phone, address, supplier_id)
         )
 
         self.db.close_pool() 

@@ -138,6 +138,7 @@ function ProductsPageContent() {
     category: "",
     description: "",
     quantity: "",
+    unit: "",
     supplier: "",
     category_id: "",
     supplier_id: "",
@@ -157,8 +158,7 @@ function ProductsPageContent() {
         name: addValues.name,
         price: parseFloat(addValues.price),
         description: addValues.description,
-        quantity: parseInt(addValues.quantity, 10),
-        image_url: `https://api.dicebear.com/9.x/identicon/svg?seed=${addValues.name}`, // or allow upload
+        quantity: parseInt(addValues.quantity, 10),        unit: addValues.unit,        image_url: `https://api.dicebear.com/9.x/identicon/svg?seed=${addValues.name}`, // or allow upload
         category_id: addValues.category_id,
         supplier_id: addValues.supplier_id,
       };
@@ -190,6 +190,7 @@ function ProductsPageContent() {
         category: "",
         description: "",
         quantity: "",
+        unit: "",
         supplier: "",
         category_id: "",
         supplier_id: "",
@@ -298,6 +299,10 @@ function ProductsPageContent() {
                   <div className="col-span-2 sm:col-span-1">
                     <label htmlFor="add-quantity" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantity</label>
                     <input type="number" name="quantity" id="add-quantity" value={addValues.quantity} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="100" required />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label htmlFor="add-unit" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Unit</label>
+                    <input type="text" name="unit" id="add-unit" value={addValues.unit} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="pcs, kg, box..." />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <label htmlFor="add-supplier" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Supplier</label>

@@ -24,9 +24,10 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
     category: product.category_name || "",
     description: product.description || "",
     quantity: product.stock_quantity || "",
-    supplier_id: product.supplier?.supplier_id || "",
+    unit: product.unit || "",
+    supplier_id: product.supplier_id || product.supplier?.supplier_id || "",
     category_id: product.category_id || "",
-    supplier: product.supplier?.name || "",
+    supplier: product.supplier_name || product.supplier?.name || "",
     category_name: product.category_name || "",
   });
 
@@ -87,9 +88,10 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
         selling_price: parseFloat(editValues.price),
         description: editValues.description,
         stock_quantity: parseInt(editValues.quantity, 10),
+        unit: editValues.unit,
         image_url: product.image_url, // keep original image_url (or use editValues if you allow editing)
         category_id: editValues.category_id || product.category_id,
-        // supplier_id: editValues.supplier_id || product.supplier?.supplier_id, // Supplier not supported in update yet
+        supplier_id: editValues.supplier_id || product.supplier_id,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/update-product`,
@@ -137,6 +139,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       <TableCell className="hidden md:table-cell">{`$${product.import_price}`}</TableCell>
       <TableCell className="hidden md:table-cell">{`$${product.selling_price}`}</TableCell>
       <TableCell className="hidden md:table-cell">{product.stock_quantity}</TableCell>
+      <TableCell className="hidden md:table-cell">{product.unit || "-"}</TableCell>
       <TableCell className="hidden md:table-cell">
         <Badge
           variant="outline"
@@ -182,7 +185,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => setShowModal(true)}>
-              See details
+              Edit products
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDeleteProduct}>
               Delete
@@ -325,6 +328,23 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="100"
                         required
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label
+                        htmlFor="unit"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Unit
+                      </label>
+                      <input
+                        type="text"
+                        name="unit"
+                        id="unit"
+                        value={editValues.unit}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="pcs, kg, box..."
                       />
                     </div>
                     <div className="col-span-2 sm:col-span-1">

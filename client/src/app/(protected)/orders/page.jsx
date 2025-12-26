@@ -158,6 +158,7 @@ function OrdersPageContent() {
   const [customers, setCustomers] = useState([]);
   const [addValues, setAddValues] = useState({
     customer_id: "",
+    payment_method: "CASH",
     items: [{ product_id: "", quantity: 1, price: 0, selectedProduct: null }]
   });
   
@@ -471,6 +472,7 @@ function OrdersPageContent() {
 
       const body = {
         customer_id: parseInt(addValues.customer_id),
+        payment_method: addValues.payment_method,
         items: validItems.map(item => ({
           product_id: parseInt(item.product_id),
           quantity: parseInt(item.quantity),
@@ -704,6 +706,25 @@ function OrdersPageContent() {
                           {customer.name || customer.customer_name} - {customer.email}
                         </option>
                       ))}
+                    </select>
+                  </div>
+
+                  {/* Payment Method Selection */}
+                  <div>
+                    <label htmlFor="add-payment-method" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Payment Method *
+                    </label>
+                    <select 
+                      id="add-payment-method" 
+                      name="payment_method" 
+                      value={addValues.payment_method} 
+                      onChange={handleAddInputChange} 
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                      required
+                    >
+                      <option value="CASH">Cash</option>
+                      <option value="TRANSFER">Transfer</option>
+                      <option value="CARD">Card</option>
                     </select>
                   </div>
 

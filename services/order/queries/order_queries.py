@@ -109,10 +109,9 @@ class OrderQueries:
     """
     
     GET_ORDER_ITEMS_FOR_CANCELLATION = """
-        SELECT poi.product_id, poi.quantity
-        FROM product_order_items poi
-        JOIN order_items oi ON poi.order_item_id = oi.order_item_id
-        WHERE oi.order_id = %s;
+        SELECT product_id, quantity
+        FROM order_details
+        WHERE order_id = %s;
     """
     
     GET_RECENT_COMPLETED_ORDERS = """
