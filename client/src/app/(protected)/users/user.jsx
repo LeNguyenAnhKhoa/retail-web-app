@@ -7,6 +7,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Input } from "@/components/ui/input";
 import { MoreHorizontal } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +24,57 @@ import { useState } from "react";
 
 export function User({ user, setError, setShowAlert }) {
   const [isActive, setIsActive] = useState(user.is_active);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    username: user.username,
+    full_name: user.full_name,
+    phone: user.phone,
+    role: user.role_name,
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateUser = async () => {
+    try {
+      const access_token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/update-user-by-admin`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${access_token}`,
+          },
+          body: JSON.stringify({
+            user_id: user.user_id,
+            ...formData,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.message || "Failed to update user");
+        setShowAlert(true);
+        setTimeout(() => {
+          setShowAlert(false);
+        }, 3000);
+        return;
+      }
+
+      setIsEditSheetOpen(false);
+      window.location.reload();
+    } catch (error) {
+      setError("Error updating user");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
+    }
+  };
 
   const activateUser = async () => {
     try {
@@ -138,6 +198,8 @@ export function User({ user, setError, setShowAlert }) {
       </TableCell>
       <TableCell className="font-medium">{formatUserID(user.user_id)}</TableCell>
       <TableCell className="font-medium">{user.username}</TableCell>
+      <TableCell>{user.full_name}</TableCell>
+      <TableCell>{user.phone}</TableCell>
       <TableCell className="hidden md:table-cell">{user.email}</TableCell>
       <TableCell className="hidden md:table-cell">
         <Badge
@@ -173,23 +235,91 @@ export function User({ user, setError, setShowAlert }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <div onClick={() => setIsEditSheetOpen(true)} className="w-full cursor-pointer">
+                Edit
+              </div>
+            </DropdownMenuItem>
             <DropdownMenuItem>
-              <button type="submit" onClick={activateUser}>
+              <button type="submit" onClick={activateUser} className="w-full text-left">
                 Activate
               </button>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <button type="submit" onClick={deactivateUser}>
+              <button type="submit" onClick={deactivateUser} className="w-full text-left">
                 Deactivate
-              </button>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button type="submit" onClick={deleteUser} className="text-red-600">
-                Delete
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Edit User</SheetTitle>
+              <SheetDescription>
+                Make changes to user profile here. Click save when you're done.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="username" className="text-right text-sm font-medium">
+                  Username
+                </label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="full_name" className="text-right text-sm font-medium">
+                  Full Name
+                </label>
+                <Input
+                  id="full_name"
+                  name="full_name"
+                  value={formData.full_name}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="phone" className="text-right text-sm font-medium">
+                  Phone
+                </label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="role" className="text-right text-sm font-medium">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="MANAGER">MANAGER</option>
+                  <option value="STAFF">STAFF</option>
+                  <option value="STOCKKEEPER">STOCKKEEPER</option>
+                </select>
+              </div>
+            </div>
+            <SheetFooter>
+              <Button onClick={handleUpdateUser}>Save changes</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </TableCell>
     </TableRow>
   );

@@ -30,6 +30,10 @@ class UpdateProductQuery:
             fields.append("unit = %s")
             params.append(updated_product.unit)
         
+        if updated_product.import_price is not None:
+            fields.append("import_price = %s")
+            params.append(updated_product.import_price)
+
         # Handle price (simple input) or selling_price (complex input)
         if updated_product.price is not None:
             fields.append("selling_price = %s")

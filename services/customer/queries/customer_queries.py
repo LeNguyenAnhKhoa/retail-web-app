@@ -20,6 +20,10 @@ class CustomerQueries:
         ORDER BY updated_at DESC, customer_id ASC;
     """
 
+    CHECK_PHONE_EXISTS = """
+        SELECT customer_id FROM customers WHERE phone = %s;
+    """
+
     CREATE_CUSTOMER = """
         INSERT INTO customers (name, phone, address)
         VALUES (%s, %s, %s);

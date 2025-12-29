@@ -5,7 +5,7 @@ class GetAllUsersQuery:
     def __init__(self):
         self.db = Database()
 
-    def get_all_users(self):
+    def get_all_users(self, search=None):
         """
         Get all users from the database.
         """
@@ -17,11 +17,19 @@ class GetAllUsersQuery:
                 role,
                 is_active,
                 created_at,
-                image_url
+                image_url,
+                full_name,
+                phone
             FROM users
-            LIMIT 100
         """
-        result = self.db.execute_query(query)
+        params = []
+        if search:
+            query += " WHERE full_name LIKE %s"
+            params.append(f"%{search}%")
+            
+        query += " LIMIT 100"
+        
+        result = self.db.execute_query(query, params)
         if result is None:
             return []
         result = [
@@ -33,6 +41,8 @@ class GetAllUsersQuery:
                 "is_active": row[4],
                 "created_time": row[5],
                 "image_url": row[6],
+                "full_name": row[7],
+                "phone": row[8],
             }
             for row in result
         ]

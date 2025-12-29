@@ -90,6 +90,7 @@ class OrderController:
                 "total_profit": row[13],
                 "created_at": row[14],
                 "updated_at": row[15],
+                "username": row[16],
             }
             if orders and orders[-1].get("order_id") == order_data.get("order_id"):
                 continue
@@ -149,11 +150,25 @@ class OrderController:
         product_ids = []
         quantities = []
         prices = []
+        receives = []
+        give_backs = []
         
         for item in order["items"]:
             product_ids.append(str(item["product_id"]))
             quantities.append(str(item["quantity"]))
             prices.append(str(item["price"]))
+            
+            receive = float(item.get("receive", 0))
+            quantity = int(item["quantity"])
+            price = float(item["price"])
+            
+            if receive < quantity * price:
+                 raise BadRequestException(f"Receive amount {receive} is less than total price {quantity * price} for product {item['product_id']}")
+            
+            give_back = receive - (quantity * price)
+            
+            receives.append(str(receive))
+            give_backs.append(str(give_back))
             
         if not product_ids:
              raise BadRequestException("No items in order")
@@ -180,6 +195,8 @@ class OrderController:
         quantities_str = ','.join(quantities)
         prices_str = ','.join(prices)
         cost_prices_str = ','.join(cost_prices)
+        receives_str = ','.join(receives)
+        give_backs_str = ','.join(give_backs)
         
         logger.info(f"Calling CreateOrderWithDetails procedure with: customer_id={order['customer_id']}, "
                     f"product_ids={product_ids_str}, quantities={quantities_str}, prices={prices_str}")
@@ -193,7 +210,9 @@ class OrderController:
             product_ids_str,
             quantities_str,
             prices_str,
-            cost_prices_str
+            cost_prices_str,
+            receives_str,
+            give_backs_str
         ))
         if res is None:
             logger.error("Failed to create order in the database")
@@ -232,24 +251,12 @@ class OrderController:
             raise NotFoundException(f"Order with ID {order_id} not found")
         
         # We need to delete in the correct order due to foreign key constraints
-        # First, find all order items
-        order_items_result = self.db.execute_query("""
-            SELECT order_item_id FROM order_items WHERE order_id = %s
-        """, (order_id,))
-        
-        # Delete from product_order_items first (for each order item)
-        for row in order_items_result:
-            order_item_id = row[0]
-            self.db.execute_query("""
-                DELETE FROM product_order_items WHERE order_item_id = %s
-            """, (order_item_id,))
-            logger.info(f"Deleted product links for order item {order_item_id}")
-        
-        # Then delete from order_items
+        # First, delete from order_details
         res = self.db.execute_query(OrderQueries.DELETE_ORDER_ITEMS, (order_id,))
         logger.info(f"Deleted all items for order {order_id}")
         if res is None:
             raise Exception("Failed to delete order items from the database")
+            
         # Finally delete the order
         res = self.db.execute_query(OrderQueries.DELETE_ORDER, (order_id,))
         logger.info(f"Deleted order {order_id}")

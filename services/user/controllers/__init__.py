@@ -2,6 +2,7 @@ from .LoginController import LoginController
 from .RegisterController import RegisterController
 from .GetUserDetailController import GetUserDetailController
 from .UpdateUserController import UpdateUserController
+from .UpdateUserByAdminController import UpdateUserByAdminController
 from .LogoutController import LogoutController
 from .GetNewAccessTokenController import GetNewAccessTokenController
 from .ActivateUserController import ActivateUserController

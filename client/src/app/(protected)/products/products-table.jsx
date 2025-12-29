@@ -60,6 +60,7 @@ export function ProductsTable({ products, offset, setOffset, totalProducts, setE
               <TableHead className="hidden md:table-cell">Unit</TableHead>
               <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead className="hidden md:table-cell">Supplier</TableHead>
+              <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>

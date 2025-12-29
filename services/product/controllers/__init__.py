@@ -6,3 +6,6 @@ from .DeleteProductController import DeleteProductController
 from .GetAllCategoriesController import GetAllCategoriesController
 from .GetProductsByCategoryController import GetProductsByCategoryController
 from .CountTotalProductsController import CountTotalProductsController
+from .CreateCategoryController import CreateCategoryController
+from .UpdateCategoryController import UpdateCategoryController
+from .DeleteCategoryController import DeleteCategoryController

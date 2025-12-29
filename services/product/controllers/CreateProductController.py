@@ -39,7 +39,16 @@ class CreateProductController:
         if product.selling_price is None or product.selling_price <= 0:
             self.query.close()
             raise InvalidDataException("Price must be greater than zero")
+
+        if product.import_price is not None and product.import_price <= 0:
+            self.query.close()
+            raise InvalidDataException("Import price must be greater than zero")
             
+        if product.import_price is not None and product.selling_price is not None:
+            if product.import_price > product.selling_price:
+                self.query.close()
+                raise InvalidDataException("Import price must be less than or equal to selling price")
+
         if product.stock_quantity is None or product.stock_quantity < 0:
             self.query.close()
             raise InvalidDataException("Quantity must be zero or greater")

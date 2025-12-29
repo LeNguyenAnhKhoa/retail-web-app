@@ -51,7 +51,11 @@ class Database:
             else:
                 cursor.execute(query)
 
-            result = cursor.fetchall()
+            if cursor.with_rows:
+                result = cursor.fetchall()
+            else:
+                result = []
+            
             connection.commit()
             return result
         except mysql.connector.Error as err:

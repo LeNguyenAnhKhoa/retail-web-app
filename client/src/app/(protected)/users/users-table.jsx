@@ -58,6 +58,8 @@ export function UsersTable({
               </TableHead>
               <TableHead>User ID</TableHead>
               <TableHead>Username</TableHead>
+              <TableHead>Full Name</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden md:table-cell">Role</TableHead>
               <TableHead className="hidden md:table-cell">Status</TableHead>

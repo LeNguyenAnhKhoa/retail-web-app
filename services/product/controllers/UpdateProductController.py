@@ -22,6 +22,16 @@ class UpdateProductController:
         if updated_product.selling_price is not None and updated_product.selling_price <= 0:
             self.query.db.close_pool()
             raise InvalidDataException("Selling price must be greater than zero")
+        if updated_product.import_price is not None and updated_product.import_price <= 0:
+            self.query.db.close_pool()
+            raise InvalidDataException("Import price must be greater than zero")
+
+        # Validate import_price <= selling_price
+        selling_price = updated_product.selling_price if updated_product.selling_price is not None else updated_product.price
+        if updated_product.import_price is not None and selling_price is not None:
+            if updated_product.import_price > selling_price:
+                self.query.db.close_pool()
+                raise InvalidDataException("Import price must be less than or equal to selling price")
             
         if updated_product.quantity is not None and updated_product.quantity < 0:
             self.query.db.close_pool()

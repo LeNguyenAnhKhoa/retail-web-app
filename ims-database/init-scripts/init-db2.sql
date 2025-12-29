@@ -71,14 +71,14 @@ INSERT INTO orders (code, customer_id, user_id, total_amount, payment_method, st
 ('HD003', 3, 2, 72000, 'CARD', 'COMPLETED');
 
 -- Insert Order Details
-INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price) VALUES 
+INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price, receive, give_back) VALUES 
 -- HD001
-(1, 1, 3, 8000, 6000),
-(1, 4, 2, 5000, 3000),
-(1, 6, 2, 5000, 3500),
+(1, 1, 3, 8000, 6000, 24000, 0),
+(1, 4, 2, 5000, 3000, 10000, 0),
+(1, 6, 2, 5000, 3500, 10000, 0),
 -- HD002 (mua sỉ nhiều)
-(2, 6, 20, 5000, 3500),
-(2, 7, 20, 4500, 3000),
+(2, 6, 20, 5000, 3500, 100000, 0),
+(2, 7, 20, 4500, 3000, 90000, 0),
 -- HD003
-(3, 1, 5, 8000, 6000),
-(3, 8, 1, 32000, 25000);
+(3, 1, 5, 8000, 6000, 40000, 0),
+(3, 8, 1, 32000, 25000, 32000, 0);

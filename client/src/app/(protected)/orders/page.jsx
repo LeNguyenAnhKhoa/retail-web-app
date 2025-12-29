@@ -159,7 +159,7 @@ function OrdersPageContent() {
   const [addValues, setAddValues] = useState({
     customer_id: "",
     payment_method: "CASH",
-    items: [{ product_id: "", quantity: 1, price: 0, selectedProduct: null }]
+    items: [{ product_id: "", quantity: 1, price: 0, receive: 0, selectedProduct: null }]
   });
   
   // Product search state for each item
@@ -404,7 +404,7 @@ function OrdersPageContent() {
   function addNewItem() {
     setAddValues((prev) => ({
       ...prev,
-      items: [...prev.items, { product_id: "", quantity: 1, price: 0, selectedProduct: null }]
+      items: [...prev.items, { product_id: "", quantity: 1, price: 0, receive: 0, selectedProduct: null }]
     }));
     
     // Initialize search state for new item
@@ -468,6 +468,15 @@ function OrdersPageContent() {
           setTimeout(() => setShowAlert(false), 3000);
           return;
         }
+        
+        // Validate receive amount
+        const subtotal = item.quantity * item.price;
+        if ((item.receive || 0) < subtotal) {
+            setError(`Receive amount for ${item.selectedProduct.name} must be greater than or equal to subtotal`);
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 3000);
+            return;
+        }
       }
 
       const body = {
@@ -476,7 +485,8 @@ function OrdersPageContent() {
         items: validItems.map(item => ({
           product_id: parseInt(item.product_id),
           quantity: parseInt(item.quantity),
-          price: parseFloat(item.price)
+          price: parseFloat(item.price),
+          receive: parseFloat(item.receive || 0)
         })),
         status: "pending"
       };
@@ -807,6 +817,27 @@ function OrdersPageContent() {
                               required
                             />
                           </div>
+
+                          {/* Receive Amount */}
+                          <div>
+                            <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                              Receive Amount
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.receive || 0}
+                              onChange={(e) => handleItemChange(index, 'receive', parseFloat(e.target.value) || 0)}
+                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                              required
+                            />
+                            {item.receive < (item.quantity * item.price) && (
+                                <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                    Must be &ge; Subtotal
+                                </div>
+                            )}
+                          </div>
                           
                           {/* Actions */}
                           <div className="flex items-end">
@@ -836,8 +867,13 @@ function OrdersPageContent() {
                               )}
                             </div>
                           )}
-                          <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Subtotal: ${(item.quantity * item.price).toFixed(2)}
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Subtotal: ${(item.quantity * item.price).toFixed(2)}
+                            </div>
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Give Back: ${((item.receive || 0) - (item.quantity * item.price)).toFixed(2)}
+                            </div>
                           </div>
                         </div>
                       </div>

@@ -5,8 +5,7 @@ import {
   TableRow,
   TableHeader,
   TableBody,
-  TableCell,
-  Table
+  Table,
 } from '@/components/ui/table';
 import {
   Card,
@@ -14,85 +13,87 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from '@/components/ui/card';
-import { Order } from './order';
-import { useRouter } from 'next/navigation';
+import { Category } from './category';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
-export function OrdersTable({ orders, offset, setOffset, totalOrders, limit = 5, setError, setShowAlert, onStatusUpdate }) {
-  let router = useRouter();
+export function CategoriesTable({ categories, setError, setShowAlert, refreshCategories }) {
+  const [offset, setOffset] = useState(0);
+  const limit = 10;
+  const totalCategories = categories.length;
+  
+  const paginatedCategories = categories.slice(offset, offset + limit);
 
   function prevPage(e) {
     e.preventDefault();
-    if (offset - limit >= 0) setOffset(offset - limit);
+    if (offset - limit >= 0) {
+      setOffset(offset - limit);
+    }
   }
 
   function nextPage(e) {
     e.preventDefault();
-    if (offset + limit < totalOrders) setOffset(offset + limit);
+    if (offset + limit < totalCategories) {
+      setOffset(offset + limit);
+    }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Orders</CardTitle>
-        <CardDescription>
-          Manage your orders and their details.
-        </CardDescription>
+        <CardTitle>Categories</CardTitle>
+        <CardDescription>Manage your product categories.</CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Username</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Date</TableHead>
-              <TableHead className="hidden md:table-cell">Total</TableHead>
-              <TableHead className="hidden md:table-cell">Payment Method</TableHead>
-              <TableHead className="hidden md:table-cell">Items</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.map((order) => (
-              <Order
-                key={order.order_id}
-                order={order}
+            {paginatedCategories.map((category) => (
+              <Category
+                key={category.category_id}
+                category={category}
                 setError={setError}
                 setShowAlert={setShowAlert}
-                onStatusUpdate={onStatusUpdate}
+                refreshCategories={refreshCategories}
               />
             ))}
-            {orders.length === 0 && (
+            {categories.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center">
-                  No orders found.
-                </TableCell>
+                <TableHead colSpan={4} className="text-center">
+                  No categories found.
+                </TableHead>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </CardContent>
       <CardFooter>
-        <div className="flex items-center w-full justify-between">
+        <form className="flex items-center w-full justify-between">
           <div className="text-xs text-muted-foreground">
             Showing{' '}
             <strong>
-              {totalOrders === 0 ? 0 : Math.min(offset + 1, totalOrders)}-{Math.min(offset + limit, totalOrders)}
+              {offset + 1}-{Math.min(offset + limit, totalCategories)}
             </strong>{' '}
-            of <strong>{totalOrders}</strong> orders
+            of <strong>{totalCategories}</strong> categories
           </div>
           <div className="flex">
             <Button
               onClick={prevPage}
               variant="ghost"
               size="sm"
+              type="button"
               disabled={offset === 0}
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
@@ -102,14 +103,15 @@ export function OrdersTable({ orders, offset, setOffset, totalOrders, limit = 5,
               onClick={nextPage}
               variant="ghost"
               size="sm"
-              disabled={offset + limit >= totalOrders}
+              type="button"
+              disabled={offset + limit >= totalCategories}
             >
               Next
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-        </div>
+        </form>
       </CardFooter>
     </Card>
   );
-} 
+}

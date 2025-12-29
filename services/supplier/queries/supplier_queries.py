@@ -44,6 +44,14 @@ class SupplierQueries:
         WHERE supplier_id = %s;
     """
 
+    CHECK_PHONE_EXISTS = """
+        SELECT supplier_id FROM suppliers WHERE phone = %s;
+    """
+    
+    CHECK_EMAIL_EXISTS = """
+        SELECT supplier_id FROM suppliers WHERE email = %s;
+    """
+
     CREATE_SUPPLIER = """
         INSERT INTO suppliers (name, contact_name, email, phone, address)
         VALUES (%s, %s, %s, %s, %s);

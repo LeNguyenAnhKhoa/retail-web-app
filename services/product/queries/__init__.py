@@ -6,3 +6,7 @@ from .DeleteProductQuery import DeleteProductQuery
 from .GetAllCategoriesQuery import GetAllCategoriesQuery
 from .GetProductsByCategoryQuery import GetProductsByCategoryQuery
 from .CountTotalProductsQuery import CountTotalProductsQuery
+from .CreateCategoryQuery import CreateCategoryQuery
+from .UpdateCategoryQuery import UpdateCategoryQuery
+from .DeleteCategoryQuery import DeleteCategoryQuery
+from .CheckCategoryHasProductsQuery import CheckCategoryHasProductsQuery

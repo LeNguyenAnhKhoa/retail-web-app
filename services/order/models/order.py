@@ -17,6 +17,7 @@ class OrderItemRequest(BaseModel):
     product_id: int
     quantity: int
     price: float
+    receive: float
 
 class OrderCreateData(BaseModel):
     customer_id: Optional[int] = None
@@ -32,6 +33,8 @@ class OrderDetail(BaseModel):
     quantity: int
     unit_price: float
     cost_price: float
+    receive: float
+    give_back: float
     created_at: datetime
     updated_at: datetime
 

@@ -8,7 +8,7 @@ class GetAllProductQuery:
         self.db.close_pool()
 
     def get_all_products_by_admin(self, params=(100, 0), search=None):
-        where_conditions = ["is_active = TRUE"]
+        where_conditions = []
         query_params = []
         
         # Build search conditions - search across name and category
