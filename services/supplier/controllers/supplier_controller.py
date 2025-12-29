@@ -3,10 +3,35 @@ from queries.supplier_queries import SupplierQueries
 from models.supplier import SupplierResponse, SupplierData
 from shared_utils.logger import logger
 from shared_config.custom_exception import InvalidDataException, NotFoundException
+import re
 
 class SupplierController:
     def __init__(self):
         self.db = Database()
+
+    def _validate_phone(self, phone: str):
+        if not phone:
+            return
+        if not re.match(r"^0\d{9}$", phone):
+            raise InvalidDataException("Phone number must be 10 digits and start with 0")
+
+    def _check_phone_exists(self, phone: str, exclude_id: int = None):
+        if not phone:
+            return
+        result = self.db.execute_query(SupplierQueries.CHECK_PHONE_EXISTS, (phone,))
+        if result:
+            if exclude_id and result[0][0] == exclude_id:
+                return
+            raise InvalidDataException(f"Phone number {phone} already exists")
+
+    def _check_email_exists(self, email: str, exclude_id: int = None):
+        if not email:
+            return
+        result = self.db.execute_query(SupplierQueries.CHECK_EMAIL_EXISTS, (email,))
+        if result:
+            if exclude_id and result[0][0] == exclude_id:
+                return
+            raise InvalidDataException(f"Email {email} already exists")
 
     def get_all_suppliers(self, user_info: dict, search: str = None) -> list:
         # Validate user_info is a dict
@@ -42,6 +67,7 @@ class SupplierController:
                 "contact_name": row[2],
                 "contact_email": row[5],
                 "phone": row[3],
+                "address": row[4],
                 "total_products": row[6],
                 "total_product_quantity": row[7],
                 "avg_product_price": row[8],
@@ -114,6 +140,7 @@ class SupplierController:
         contact_email = supplier.get("contact_email")
         contact_name = supplier.get("contact_name")
         phone = supplier.get("phone")
+        address = supplier.get("address")
         
         # at least one of contact_email or phone must be provided
         if not contact_email and not phone:
@@ -121,10 +148,17 @@ class SupplierController:
         if not contact_name:
             raise InvalidDataException("Contact name must be provided")
         
+        # Validate phone format
+        self._validate_phone(phone)
+        
+        # Check uniqueness
+        self._check_phone_exists(phone)
+        self._check_email_exists(contact_email)
+
         # Create new supplier
         res = self.db.execute_query(
             SupplierQueries.CREATE_SUPPLIER,
-            (name, contact_name, contact_email, phone)
+            (name, contact_name, contact_email, phone, address)
         )
         self.db.close_pool()
         if  res:
@@ -150,14 +184,22 @@ class SupplierController:
         if contact_email is None and supplier.email is not None:
             contact_email = supplier.email
         if contact_email is None:
-            contact_email = current[3]
+            contact_email = current[5]
             
-        phone = supplier.phone if supplier.phone is not None else current[4]
+        phone = supplier.phone if supplier.phone is not None else current[3]
+        address = supplier.address if supplier.address is not None else current[4]
+
+        # Validate phone format
+        self._validate_phone(phone)
+
+        # Check uniqueness
+        self._check_phone_exists(phone, exclude_id=supplier_id)
+        self._check_email_exists(contact_email, exclude_id=supplier_id)
 
         # Update supplier
         res = self.db.execute_query(
             SupplierQueries.UPDATE_SUPPLIER,
-            (name, contact_name, contact_email, phone, supplier_id)
+            (name, contact_name, contact_email, phone, address, supplier_id)
         )
 
         self.db.close_pool() 
@@ -173,10 +215,16 @@ class SupplierController:
             self.db.close_pool()
             raise NotFoundException(f"Supplier with ID {supplier_id} not found")
 
-        if existing[0][6] and existing[0][6] > 0:
+        # Check for active products
+        active_products_count = self.db.execute_query(SupplierQueries.COUNT_ACTIVE_PRODUCTS_BY_SUPPLIER_ID, (supplier_id,))
+        if active_products_count and active_products_count[0][0] > 0:
             self.db.close_pool()
             raise InvalidDataException("Cannot delete supplier with existing products")
        
+        # Nullify references in other tables to avoid foreign key constraints
+        self.db.execute_query(SupplierQueries.NULLIFY_PRODUCT_SUPPLIER, (supplier_id,))
+        self.db.execute_query(SupplierQueries.NULLIFY_INVENTORY_TICKET_SUPPLIER, (supplier_id,))
+
         # Delete supplier
         res = self.db.execute_query(SupplierQueries.DELETE_SUPPLIER, (supplier_id,))
         self.db.close_pool()

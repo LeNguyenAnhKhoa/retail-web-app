@@ -13,7 +13,7 @@ class CountTotalProductsQuery:
         if search:
             query = """
             SELECT COUNT(*) FROM product_summary_view 
-            WHERE name LIKE %s OR category_name LIKE %s
+            WHERE (product_name LIKE %s OR category_name LIKE %s)
             """
             search_term = f"%{search}%"
             result = self.db.execute_query(query, (search_term, search_term))

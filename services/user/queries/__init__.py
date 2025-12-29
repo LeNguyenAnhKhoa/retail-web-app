@@ -1,5 +1,5 @@
 from .LoginQuery import LoginQuery
-from .RegiserQuery import RegisterQuery
+from .RegisterQuery import RegisterQuery
 from .GetUserDetailQuery import GetUserDetailQuery
 from .UpdateUserQuery import UpdateUserQuery
 from .LogoutQuery import LogoutQuery
@@ -9,3 +9,4 @@ from .GetAllUsersQuery import GetAllUsersQuery
 from .DeactivateUserQuery import DeactivateUserQuery
 from .DashboardStatsQuery import DashboardStatsQuery
 from .MonthlySalesQuery import MonthlySalesQuery
+from .DeleteUserQuery import DeleteUserQuery

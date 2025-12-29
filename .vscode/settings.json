@@ -2,5 +2,8 @@
   "python.languageServer": "Pylance",
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none"
-  }
+  },
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
+  "python-envs.defaultPackageManager": "ms-python.python:conda",
+  "python-envs.pythonProjects": []
 }

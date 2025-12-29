@@ -114,6 +114,8 @@ CREATE TABLE order_details (
     quantity INT NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
     cost_price DECIMAL(10, 2) NOT NULL,
+    receive DECIMAL(10, 2) DEFAULT 0,
+    give_back DECIMAL(10, 2) DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_orderdetails_order FOREIGN KEY (order_id) REFERENCES orders(order_id),

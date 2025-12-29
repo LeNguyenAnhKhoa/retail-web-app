@@ -94,6 +94,7 @@ function SuppliersPageContent() {
     contact_email: "",
     email: "",
     phone: "",
+    address: "",
   });
 
   function handleAddInputChange(e) {
@@ -111,7 +112,7 @@ function SuppliersPageContent() {
         contact_email: addValues.contact_email || null,
         email: addValues.email || null,
         phone: addValues.phone,
-        address: "", // Keep address blank as requested
+        address: addValues.address || null,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/supplier/create-supplier`,
@@ -135,7 +136,7 @@ function SuppliersPageContent() {
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
       setShowAddModal(false);
-      setAddValues({ name: "", contact_name: "", contact_email: "", email: "", phone: "" });
+      setAddValues({ name: "", contact_name: "", contact_email: "", email: "", phone: "", address: "" });
       
       // Refresh the suppliers list
       window.location.reload();
@@ -165,12 +166,6 @@ function SuppliersPageContent() {
           </div>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
           <Button size="sm" className="h-8 gap-1" onClick={() => setShowAddModal(true)}>
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -272,6 +267,20 @@ function SuppliersPageContent() {
                       className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
                       placeholder="Enter phone number" 
                       required 
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="add-address" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Address
+                    </label>
+                    <input 
+                      type="text" 
+                      name="address" 
+                      id="add-address" 
+                      value={addValues.address} 
+                      onChange={handleAddInputChange} 
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                      placeholder="Enter address" 
                     />
                   </div>
                 </div>

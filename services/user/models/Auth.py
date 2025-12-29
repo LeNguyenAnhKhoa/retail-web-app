@@ -17,6 +17,7 @@ class RegisterModel(BaseModel):
     email: str = Field(..., title="Email", description="User's email address")
     password: str = Field(..., title="Password", description="User's password")
     username: str = Field(..., title="Username", description="User's username")
+    phone: str = Field(..., title="Phone", description="User's phone number")
     
     class Config:
         from_attributes = True
@@ -25,6 +26,7 @@ class RegisterModel(BaseModel):
                 "email": "user@example.com",
                 "password": "string",
                 "username": "johndoe",
+                "phone": "0901234567"
             }
         }
         

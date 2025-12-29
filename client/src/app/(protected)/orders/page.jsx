@@ -102,16 +102,16 @@ function SearchableProductSelector({
                         {product.name}
                       </div>
                       <div className="text-sm text-gray-600 dark:text-gray-300">
-                        Price: ${product.price}
+                        Price: ${product.selling_price}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Stock: {product.quantity || 0}
+                        Stock: {product.stock_quantity || 0}
                       </div>
-                      {(product.quantity || 0) <= 10 && (
+                      {(product.stock_quantity || 0) <= 10 && (
                         <div className="text-xs text-red-600 dark:text-red-400">
-                          {product.quantity === 0 ? 'Out of stock' : 'Low stock'}
+                          {product.stock_quantity === 0 ? 'Out of stock' : 'Low stock'}
                         </div>
                       )}
                     </div>
@@ -158,7 +158,8 @@ function OrdersPageContent() {
   const [customers, setCustomers] = useState([]);
   const [addValues, setAddValues] = useState({
     customer_id: "",
-    items: [{ product_id: "", quantity: 1, price: 0, selectedProduct: null }]
+    payment_method: "CASH",
+    items: [{ product_id: "", quantity: 1, price: 0, receive: 0, selectedProduct: null }]
   });
   
   // Product search state for each item
@@ -350,9 +351,9 @@ function OrdersPageContent() {
     updatedItems[itemIndex] = {
       ...updatedItems[itemIndex],
       product_id: product.product_id,
-      price: product.price,
+      price: product.selling_price,
       selectedProduct: product,
-      quantity: Math.min(updatedItems[itemIndex].quantity, product.quantity || 1)
+      quantity: Math.min(updatedItems[itemIndex].quantity, product.stock_quantity || 1)
     };
     
     setAddValues(prev => ({ ...prev, items: updatedItems }));
@@ -388,7 +389,7 @@ function OrdersPageContent() {
     
     // If quantity changes, validate against stock
     if (field === 'quantity' && updatedItems[index].selectedProduct) {
-      const maxQuantity = updatedItems[index].selectedProduct.quantity || 0;
+      const maxQuantity = updatedItems[index].selectedProduct.stock_quantity || 0;
       if (value > maxQuantity) {
         setError(`Only ${maxQuantity} units available in stock`);
         setShowAlert(true);
@@ -403,7 +404,7 @@ function OrdersPageContent() {
   function addNewItem() {
     setAddValues((prev) => ({
       ...prev,
-      items: [...prev.items, { product_id: "", quantity: 1, price: 0, selectedProduct: null }]
+      items: [...prev.items, { product_id: "", quantity: 1, price: 0, receive: 0, selectedProduct: null }]
     }));
     
     // Initialize search state for new item
@@ -460,21 +461,32 @@ function OrdersPageContent() {
 
       // Validate stock quantities
       for (const item of validItems) {
-        const availableStock = item.selectedProduct?.quantity || 0;
+        const availableStock = item.selectedProduct?.stock_quantity || 0;
         if (item.quantity > availableStock) {
           setError(`Insufficient stock for ${item.selectedProduct.name}. Available: ${availableStock}, Requested: ${item.quantity}`);
           setShowAlert(true);
           setTimeout(() => setShowAlert(false), 3000);
           return;
         }
+        
+        // Validate receive amount
+        const subtotal = item.quantity * item.price;
+        if ((item.receive || 0) < subtotal) {
+            setError(`Receive amount for ${item.selectedProduct.name} must be greater than or equal to subtotal`);
+            setShowAlert(true);
+            setTimeout(() => setShowAlert(false), 3000);
+            return;
+        }
       }
 
       const body = {
         customer_id: parseInt(addValues.customer_id),
+        payment_method: addValues.payment_method,
         items: validItems.map(item => ({
           product_id: parseInt(item.product_id),
           quantity: parseInt(item.quantity),
-          price: parseFloat(item.price)
+          price: parseFloat(item.price),
+          receive: parseFloat(item.receive || 0)
         })),
         status: "pending"
       };
@@ -707,6 +719,25 @@ function OrdersPageContent() {
                     </select>
                   </div>
 
+                  {/* Payment Method Selection */}
+                  <div>
+                    <label htmlFor="add-payment-method" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Payment Method *
+                    </label>
+                    <select 
+                      id="add-payment-method" 
+                      name="payment_method" 
+                      value={addValues.payment_method} 
+                      onChange={handleAddInputChange} 
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" 
+                      required
+                    >
+                      <option value="CASH">Cash</option>
+                      <option value="TRANSFER">Transfer</option>
+                      <option value="CARD">Card</option>
+                    </select>
+                  </div>
+
                   {/* Products Section */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -751,20 +782,20 @@ function OrdersPageContent() {
                               Quantity
                               {item.selectedProduct && (
                                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                  (Max: {item.selectedProduct.quantity || 0})
+                                  (Max: {item.selectedProduct.stock_quantity || 0})
                                 </span>
                               )}
                             </label>
                             <input
                               type="number"
                               min="1"
-                              max={item.selectedProduct?.quantity || 999}
+                              max={item.selectedProduct?.stock_quantity || 999}
                               value={item.quantity}
                               onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                               required
                             />
-                            {item.selectedProduct && item.quantity > (item.selectedProduct.quantity || 0) && (
+                            {item.selectedProduct && item.quantity > (item.selectedProduct.stock_quantity || 0) && (
                               <div className="text-xs text-red-600 dark:text-red-400 mt-1">
                                 Exceeds available stock
                               </div>
@@ -785,6 +816,27 @@ function OrdersPageContent() {
                               className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
                               required
                             />
+                          </div>
+
+                          {/* Receive Amount */}
+                          <div>
+                            <label className="block mb-1 text-sm font-medium text-gray-900 dark:text-white">
+                              Receive Amount
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={item.receive || 0}
+                              onChange={(e) => handleItemChange(index, 'receive', parseFloat(e.target.value) || 0)}
+                              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                              required
+                            />
+                            {item.receive < (item.quantity * item.price) && (
+                                <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                    Must be &ge; Subtotal
+                                </div>
+                            )}
                           </div>
                           
                           {/* Actions */}
@@ -807,16 +859,21 @@ function OrdersPageContent() {
                         <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-500 flex justify-between items-center">
                           {item.selectedProduct && (
                             <div className="text-sm text-gray-600 dark:text-gray-300">
-                              Stock Available: <span className="font-medium">{item.selectedProduct.quantity || 0}</span> units
-                              {(item.selectedProduct.quantity || 0) <= 10 && (
+                              Stock Available: <span className="font-medium">{item.selectedProduct.stock_quantity || 0}</span> units
+                              {(item.selectedProduct.stock_quantity || 0) <= 10 && (
                                 <span className="text-red-600 dark:text-red-400 ml-2">
-                                  {item.selectedProduct.quantity === 0 ? '(Out of stock)' : '(Low stock)'}
+                                  {item.selectedProduct.stock_quantity === 0 ? '(Out of stock)' : '(Low stock)'}
                                 </span>
                               )}
                             </div>
                           )}
-                          <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Subtotal: ${(item.quantity * item.price).toFixed(2)}
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                Subtotal: ${(item.quantity * item.price).toFixed(2)}
+                            </div>
+                            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Give Back: ${((item.receive || 0) - (item.quantity * item.price)).toFixed(2)}
+                            </div>
                           </div>
                         </div>
                       </div>

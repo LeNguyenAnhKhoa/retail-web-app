@@ -20,13 +20,14 @@ export default function RegisterPage() {
     const username = formData.get("username");
     const email = formData.get("email");
     const password = formData.get("password");
+    const phone = formData.get("phone");
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password }),
+          body: JSON.stringify({ username, email, password, phone }),
         }
       );
 
@@ -94,6 +95,22 @@ export default function RegisterPage() {
               name="username"
               type="text"
               placeholder="John Doe"
+              required
+              className="mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="phone"
+              className="block text-xs text-gray-600 uppercase"
+            >
+              Phone
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              placeholder="0901234567"
               required
               className="mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:border-black focus:ring-black sm:text-sm"
             />

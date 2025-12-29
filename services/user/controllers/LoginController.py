@@ -44,6 +44,10 @@ class LoginController:
         if not user:
             self.query.close()
             raise InvalidDataException("Invalid email or password")
+            
+        if not user.get("is_active"):
+            self.query.close()
+            raise InvalidDataException("User is not active. Please contact manager.")
         
         # Verify the password
         if not self.__verify_password(password, user.get("password_hash")):

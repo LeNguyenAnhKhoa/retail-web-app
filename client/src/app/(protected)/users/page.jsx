@@ -4,19 +4,26 @@ import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UsersTable } from "./users-table";
 import withAuth from "@/hooks/withAuth";
+import { useSearchParams } from "next/navigation";
 
 function UsersPage() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
+  const searchParams = useSearchParams();
+  const search = searchParams.get("search");
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const access_token = localStorage.getItem("access_token");
+        let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get-all-users`;
+        if (search) {
+          url += `?search=${search}`;
+        }
 
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/user/get-all-users`,
+          url,
           {
             method: "GET",
             headers: {
@@ -48,7 +55,7 @@ function UsersPage() {
     };
 
     fetchUsers();
-  }, []);
+  }, [search]);
 
   return (
     <Tabs defaultValue="all">

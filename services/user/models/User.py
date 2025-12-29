@@ -27,6 +27,7 @@ class UpdateUserModel(BaseModel):
     username: Optional[str] = Field(None, title="Username", description="Username of the user")
     full_name: Optional[str] = Field(None, title="Full Name", description="Full name of the user")
     phone: Optional[str] = Field(None, title="Phone", description="Phone number of the user")
+    image_url: Optional[str] = Field(None, title="Image URL", description="URL of the user's avatar")
 
     class Config:
         from_attributes = True
@@ -34,7 +35,27 @@ class UpdateUserModel(BaseModel):
             "example": {
                 "username": "admin",
                 "full_name": "Nguyễn Văn Admin",
-                "phone": "0901234567"
+                "phone": "0901234567",
+                "image_url": "https://example.com/avatar.png"
+            }
+        }
+
+class AdminUpdateUserModel(BaseModel):
+    user_id: int = Field(..., title="User ID", description="Unique identifier for the user")
+    username: Optional[str] = Field(None, title="Username", description="Username of the user")
+    full_name: Optional[str] = Field(None, title="Full Name", description="Full name of the user")
+    phone: Optional[str] = Field(None, title="Phone", description="Phone number of the user")
+    role: Optional[str] = Field(None, title="Role", description="Role of the user (MANAGER, STAFF, STOCKKEEPER)")
+
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "user_id": 1,
+                "username": "admin",
+                "full_name": "Nguyễn Văn Admin",
+                "phone": "0901234567",
+                "role": "MANAGER"
             }
         }
 

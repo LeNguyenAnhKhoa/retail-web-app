@@ -20,13 +20,15 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
   // Modal state for editing
   const [editValues, setEditValues] = useState({
     name: product.name || "",
-    price: product.selling_price || "",
+    import_price: product.import_price || "",
+    selling_price: product.selling_price || "",
     category: product.category_name || "",
     description: product.description || "",
     quantity: product.stock_quantity || "",
-    supplier_id: product.supplier?.supplier_id || "",
+    unit: product.unit || "",
+    supplier_id: product.supplier_id || product.supplier?.supplier_id || "",
     category_id: product.category_id || "",
-    supplier: product.supplier?.name || "",
+    supplier: product.supplier_name || product.supplier?.name || "",
     category_name: product.category_name || "",
   });
 
@@ -48,22 +50,27 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
     return `P${id.toString().padStart(4, "0")}`;
   }
 
-  // Separate delete handler for product deletion
-  async function handleDeleteProduct() {
+  // Handle status change
+  async function handleStatusChange(newStatus) {
     try {
       const access_token = localStorage.getItem("access_token");
+      const body = {
+        product_id: product.product_id,
+        is_active: newStatus,
+      };
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/delete-product?product_id=${product.product_id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/update-product`,
         {
-          method: "DELETE",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `${access_token}`,
           },
+          body: JSON.stringify(body),
         }
       );
       if (!response.ok) {
-        setError("Failed to delete product");
+        setError("Failed to update product status");
         setShowAlert(true);
         return;
       }
@@ -71,7 +78,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       setShowAlert(true);
       window.location.reload();
     } catch (error) {
-      setError("Error deleting product");
+      setError("Error updating product status");
       setShowAlert(true);
     }
   }
@@ -79,17 +86,32 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
   // Update product handler
   async function updateProduct(e) {
     e.preventDefault();
+    
+    if (parseInt(editValues.quantity, 10) <= 0) {
+      setError("Quantity must be greater than 0");
+      setShowAlert(true);
+      return;
+    }
+
+    if (parseFloat(editValues.import_price) > parseFloat(editValues.selling_price)) {
+      setError("Import price must be less than or equal to selling price");
+      setShowAlert(true);
+      return;
+    }
+
     try {
       const access_token = localStorage.getItem("access_token");
       const body = {
         product_id: product.product_id,
         name: editValues.name,
-        selling_price: parseFloat(editValues.price),
+        import_price: parseFloat(editValues.import_price),
+        selling_price: parseFloat(editValues.selling_price),
         description: editValues.description,
         stock_quantity: parseInt(editValues.quantity, 10),
+        unit: editValues.unit,
         image_url: product.image_url, // keep original image_url (or use editValues if you allow editing)
         category_id: editValues.category_id || product.category_id,
-        // supplier_id: editValues.supplier_id || product.supplier?.supplier_id, // Supplier not supported in update yet
+        supplier_id: editValues.supplier_id || product.supplier_id,
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/update-product`,
@@ -137,6 +159,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       <TableCell className="hidden md:table-cell">{`$${product.import_price}`}</TableCell>
       <TableCell className="hidden md:table-cell">{`$${product.selling_price}`}</TableCell>
       <TableCell className="hidden md:table-cell">{product.stock_quantity}</TableCell>
+      <TableCell className="hidden md:table-cell">{product.unit || "-"}</TableCell>
       <TableCell className="hidden md:table-cell">
         <Badge
           variant="outline"
@@ -171,6 +194,11 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
       <TableCell className="hidden md:table-cell">
         {product.supplier_name || "-"}
       </TableCell>
+      <TableCell className="hidden md:table-cell">
+        <Badge variant="outline" className={product.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+          {product.is_active ? "Active" : "Inactive"}
+        </Badge>
+      </TableCell>
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -182,10 +210,13 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => setShowModal(true)}>
-              See details
+              Edit products
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDeleteProduct}>
-              Delete
+            <DropdownMenuItem onClick={() => handleStatusChange(true)}>
+              Activate
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleStatusChange(false)}>
+              Deactivate
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -251,16 +282,34 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
                     </div>
                     <div className="col-span-2 sm:col-span-1">
                       <label
-                        htmlFor="price"
+                        htmlFor="import_price"
                         className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                       >
-                        Price
+                        Import Price
                       </label>
                       <input
                         type="number"
-                        name="price"
-                        id="price"
-                        value={editValues.price}
+                        name="import_price"
+                        id="import_price"
+                        value={editValues.import_price}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="$2000"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label
+                        htmlFor="selling_price"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Selling Price
+                      </label>
+                      <input
+                        type="number"
+                        name="selling_price"
+                        id="selling_price"
+                        value={editValues.selling_price}
                         onChange={handleInputChange}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="$2999"
@@ -325,6 +374,23 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="100"
                         required
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <label
+                        htmlFor="unit"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Unit
+                      </label>
+                      <input
+                        type="text"
+                        name="unit"
+                        id="unit"
+                        value={editValues.unit}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="pcs, kg, box..."
                       />
                     </div>
                     <div className="col-span-2 sm:col-span-1">

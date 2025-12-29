@@ -53,7 +53,7 @@ class GetAllProductQuery:
         return formatted_result
 
     def get_all_product_by_user(self, user_id, params=(100, 0), search=None):
-        where_conditions = []
+        where_conditions = ["is_active = TRUE"]
         query_params = []
         
         # Build search conditions - search across name, category, and supplier

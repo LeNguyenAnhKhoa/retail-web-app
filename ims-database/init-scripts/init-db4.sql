@@ -59,7 +59,9 @@ CREATE PROCEDURE CreateOrderWithDetails(
     IN p_product_ids TEXT,      -- comma-separated: '1,2,3'
     IN p_quantities TEXT,        -- comma-separated: '2,1,5'
     IN p_unit_prices TEXT,       -- comma-separated: '10.00,20.00,5.50'
-    IN p_cost_prices TEXT        -- comma-separated: '8.00,15.00,4.00'
+    IN p_cost_prices TEXT,       -- comma-separated: '8.00,15.00,4.00'
+    IN p_receives TEXT,          -- comma-separated: '10.00,20.00,5.50'
+    IN p_give_backs TEXT         -- comma-separated: '0.00,0.00,0.00'
 )
 BEGIN
     DECLARE v_order_id INT;
@@ -70,6 +72,8 @@ BEGIN
     DECLARE v_quantity INT;
     DECLARE v_unit_price DECIMAL(10,2);
     DECLARE v_cost_price DECIMAL(10,2);
+    DECLARE v_receive DECIMAL(10,2);
+    DECLARE v_give_back DECIMAL(10,2);
     DECLARE v_line_total DECIMAL(10,2);
     DECLARE v_stock INT;
     
@@ -109,10 +113,12 @@ BEGIN
         SET v_quantity = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS UNSIGNED);
         SET v_unit_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_unit_prices, ',', i), ',', -1) AS DECIMAL(10,2));
         SET v_cost_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_cost_prices, ',', i), ',', -1) AS DECIMAL(10,2));
+        SET v_receive = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_receives, ',', i), ',', -1) AS DECIMAL(10,2));
+        SET v_give_back = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_give_backs, ',', i), ',', -1) AS DECIMAL(10,2));
         
         -- Insert order detail
-        INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price)
-        VALUES (v_order_id, v_product_id, v_quantity, v_unit_price, v_cost_price);
+        INSERT INTO order_details (order_id, product_id, quantity, unit_price, cost_price, receive, give_back)
+        VALUES (v_order_id, v_product_id, v_quantity, v_unit_price, v_cost_price, v_receive, v_give_back);
         
         -- Update product stock
         UPDATE products SET stock_quantity = stock_quantity - v_quantity WHERE product_id = v_product_id;

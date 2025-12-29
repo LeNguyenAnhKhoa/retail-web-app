@@ -34,7 +34,7 @@ def get_product(product_id: int, user_info: dict = Depends(login_required)):
 @standard_response
 def create_product(product: ProductCreateModel, user_info: dict = Depends(login_required)):
     controller = CreateProductController()
-    controller.execute(product)
+    controller.execute(product, user_info)
     return {}
 
 
@@ -60,6 +60,30 @@ def get_categories(user_info: dict = Depends(login_required)):
     controller = GetAllCategoriesController()
     response = controller.execute()
     return response
+
+
+@router.post("/create-category", response_model=StandardResponse)
+@standard_response
+def create_category(category: CategoryCreateModel, user_info: dict = Depends(login_required)):
+    controller = CreateCategoryController()
+    controller.execute(category)
+    return {}
+
+
+@router.post("/update-category/{category_id}", response_model=StandardResponse)
+@standard_response
+def update_category(category_id: int, category: CategoryUpdateModel, user_info: dict = Depends(login_required)):
+    controller = UpdateCategoryController()
+    controller.execute(category_id, category)
+    return {}
+
+
+@router.delete("/delete-category/{category_id}", response_model=StandardResponse)
+@standard_response
+def delete_category(category_id: int, user_info: dict = Depends(login_required)):
+    controller = DeleteCategoryController()
+    controller.execute(category_id)
+    return {}
 
 
 @router.get("/products-by-category/{category_id}", response_model=StandardResponse)

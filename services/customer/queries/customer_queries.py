@@ -17,7 +17,11 @@ class CustomerQueries:
         SELECT *
         FROM customer_summary_view
         WHERE customer_id = %s
-        ORDER BY customer_updated_time DESC, customer_id ASC;
+        ORDER BY updated_at DESC, customer_id ASC;
+    """
+
+    CHECK_PHONE_EXISTS = """
+        SELECT customer_id FROM customers WHERE phone = %s;
     """
 
     CREATE_CUSTOMER = """

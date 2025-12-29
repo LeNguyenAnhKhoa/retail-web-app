@@ -2,6 +2,7 @@ from .LoginController import LoginController
 from .RegisterController import RegisterController
 from .GetUserDetailController import GetUserDetailController
 from .UpdateUserController import UpdateUserController
+from .UpdateUserByAdminController import UpdateUserByAdminController
 from .LogoutController import LogoutController
 from .GetNewAccessTokenController import GetNewAccessTokenController
 from .ActivateUserController import ActivateUserController
@@ -9,3 +10,4 @@ from .GetAllUsersController import GetAllUsersController
 from .DeactivateUserController import DeactivateUserController
 from .DashboardStatsController import DashboardStatsController
 from .MonthlySalesController import MonthlySalesController
+from .DeleteUserController import DeleteUserController

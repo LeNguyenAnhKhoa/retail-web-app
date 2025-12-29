@@ -3,10 +3,26 @@ from queries.customer_queries import CustomerQueries
 from models.customer import CustomerResponse, CustomerData
 from shared_utils.logger import logger
 from shared_config.custom_exception import InvalidDataException, NotFoundException
+import re
 
 class CustomerController:
     def __init__(self):
         self.db = Database()
+
+    def _validate_phone(self, phone: str):
+        if not phone:
+            return
+        if not re.match(r"^0\d{9}$", phone):
+            raise InvalidDataException("Phone number must be 10 digits and start with 0")
+
+    def _check_phone_exists(self, phone: str, exclude_id: int = None):
+        if not phone:
+            return
+        result = self.db.execute_query(CustomerQueries.CHECK_PHONE_EXISTS, (phone,))
+        if result:
+            if exclude_id and result[0][0] == exclude_id:
+                return
+            raise InvalidDataException(f"Phone number {phone} already exists")
 
     def get_all_customers(self, search: str = None):
         search = search.strip() if search else None
@@ -68,8 +84,12 @@ class CustomerController:
             raise InvalidDataException("Name and phone must be strings")
         if len(customer["name"]) < 3 or len(customer["name"]) > 50:
             raise InvalidDataException("Name must be between 3 and 50 characters")
-        if len(customer["phone"]) < 10 or len(customer["phone"]) > 15:
-            raise InvalidDataException("Phone must be between 10 and 15 characters")
+        
+        # Validate phone format
+        self._validate_phone(customer["phone"])
+        
+        # Check uniqueness
+        self._check_phone_exists(customer["phone"])
 
         # Create new customer
         self.db.execute_query(
@@ -95,6 +115,12 @@ class CustomerController:
         name = customer.name if customer.name is not None else current[1]
         phone = customer.phone if customer.phone is not None else current[2]
         address = customer.address if customer.address is not None else current[3]
+
+        # Validate phone format
+        self._validate_phone(phone)
+
+        # Check uniqueness
+        self._check_phone_exists(phone, exclude_id=customer_id)
 
         # Update customer
         self.db.execute_query(

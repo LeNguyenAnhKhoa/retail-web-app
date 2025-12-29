@@ -31,7 +31,12 @@ class SupplierQueries:
         SELECT p.product_id, p.name, p.description, p.import_price, p.stock_quantity, c.name, p.created_at, p.updated_at
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.category_id
-        WHERE p.supplier_id = %s;
+        WHERE p.supplier_id = %s AND p.is_active = TRUE;
+    """
+    
+    COUNT_ACTIVE_PRODUCTS_BY_SUPPLIER_ID = """
+        SELECT COUNT(*) FROM products
+        WHERE supplier_id = %s AND is_active = TRUE;
     """
     
     CHECK_SUPPLIER_EXISTS = """
@@ -39,18 +44,34 @@ class SupplierQueries:
         WHERE supplier_id = %s;
     """
 
+    CHECK_PHONE_EXISTS = """
+        SELECT supplier_id FROM suppliers WHERE phone = %s;
+    """
+    
+    CHECK_EMAIL_EXISTS = """
+        SELECT supplier_id FROM suppliers WHERE email = %s;
+    """
+
     CREATE_SUPPLIER = """
-        INSERT INTO suppliers (name, contact_name, contact_email, phone)
-        VALUES (%s, %s, %s, %s);
+        INSERT INTO suppliers (name, contact_name, email, phone, address)
+        VALUES (%s, %s, %s, %s, %s);
     """
     
     UPDATE_SUPPLIER = """
         UPDATE suppliers
-        SET name = %s, contact_name = %s, contact_email = %s, phone = %s, updated_time = CURRENT_TIMESTAMP
+        SET name = %s, contact_name = %s, email = %s, phone = %s, address = %s, updated_at = CURRENT_TIMESTAMP
         WHERE supplier_id = %s;
     """
     
     DELETE_SUPPLIER = """
         DELETE FROM suppliers
         WHERE supplier_id = %s;
+    """
+
+    NULLIFY_PRODUCT_SUPPLIER = """
+        UPDATE products SET supplier_id = NULL WHERE supplier_id = %s;
+    """
+
+    NULLIFY_INVENTORY_TICKET_SUPPLIER = """
+        UPDATE inventory_tickets SET supplier_id = NULL WHERE supplier_id = %s;
     """

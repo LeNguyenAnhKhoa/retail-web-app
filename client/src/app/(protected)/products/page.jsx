@@ -2,10 +2,11 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { File, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductsTable } from "./products-table";
+import { CategoriesTable } from "./categories-table";
 import withAuth from "@/hooks/withAuth";
 
 function ProductsPageContent() {
@@ -20,7 +21,31 @@ function ProductsPageContent() {
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [user, setUser] = useState(null);
+  const [activeTab, setActiveTab] = useState("product");
   const limit = 100;
+
+  const fetchCategories = async () => {
+    try {
+      const access_token = localStorage.getItem("access_token");
+      const categoriesRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/categories`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${access_token}`,
+          },
+        }
+      );
+      if (categoriesRes.ok) {
+        const categoriesData = await categoriesRes.json();
+        setCategories(categoriesData?.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
   useEffect(() => {
     // Get user info from localStorage
     const userData = localStorage.getItem("user");
@@ -86,20 +111,7 @@ function ProductsPageContent() {
         setProducts(productsData?.data?.products || []);
 
         // Fetch categories
-        const categoriesRes = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/categories`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `${access_token}`,
-            },
-          }
-        );
-        if (categoriesRes.ok) {
-          const categoriesData = await categoriesRes.json();
-          setCategories(categoriesData?.data || []);
-        }
+        await fetchCategories();
 
         // Fetch suppliers
         const suppliersRes = await fetch(
@@ -134,13 +146,22 @@ function ProductsPageContent() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addValues, setAddValues] = useState({
     name: "",
-    price: "",
+    import_price: "",
+    selling_price: "",
     category: "",
     description: "",
     quantity: "",
+    unit: "",
     supplier: "",
     category_id: "",
     supplier_id: "",
+  });
+
+  // Add state for add category modal
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [addCategoryValues, setAddCategoryValues] = useState({
+    name: "",
+    description: "",
   });
 
   function handleAddInputChange(e) {
@@ -148,17 +169,37 @@ function ProductsPageContent() {
     setAddValues((prev) => ({ ...prev, [name]: value }));
   }
 
+  function handleAddCategoryInputChange(e) {
+    const { name, value } = e.target;
+    setAddCategoryValues((prev) => ({ ...prev, [name]: value }));
+  }
+
   async function createProduct(e) {
     e.preventDefault();
+    
+    if (parseInt(addValues.quantity, 10) <= 0) {
+      setError("Quantity must be greater than 0");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (parseFloat(addValues.import_price) > parseFloat(addValues.selling_price)) {
+      setError("Import price must be less than or equal to selling price");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
     try {
       const access_token = localStorage.getItem("access_token");
       
       const body = {
         name: addValues.name,
-        price: parseFloat(addValues.price),
+        import_price: parseFloat(addValues.import_price),
+        selling_price: parseFloat(addValues.selling_price),
         description: addValues.description,
-        quantity: parseInt(addValues.quantity, 10),
-        image_url: `https://api.dicebear.com/9.x/identicon/svg?seed=${addValues.name}`, // or allow upload
+        quantity: parseInt(addValues.quantity, 10),        unit: addValues.unit,        image_url: `https://api.dicebear.com/9.x/identicon/svg?seed=${addValues.name}`, // or allow upload
         category_id: addValues.category_id,
         supplier_id: addValues.supplier_id,
       };
@@ -186,10 +227,12 @@ function ProductsPageContent() {
       setShowAddModal(false);
       setAddValues({
         name: "",
-        price: "",
+        import_price: "",
+        selling_price: "",
         category: "",
         description: "",
         quantity: "",
+        unit: "",
         supplier: "",
         category_id: "",
         supplier_id: "",
@@ -201,8 +244,50 @@ function ProductsPageContent() {
     }
   }
 
+  async function createCategory(e) {
+    e.preventDefault();
+    try {
+      const access_token = localStorage.getItem("access_token");
+      const body = {
+        name: addCategoryValues.name,
+        description: addCategoryValues.description,
+      };
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/create-category`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `${access_token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData?.message || "Failed to create category");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+      setError("Category created successfully!");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      setShowAddCategoryModal(false);
+      setAddCategoryValues({
+        name: "",
+        description: "",
+      });
+      fetchCategories();
+    } catch (error) {
+      setError("Error creating category");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+    }
+  }
+
   return (
-    <Tabs defaultValue="all">
+    <Tabs defaultValue="product" onValueChange={setActiveTab}>
       {showAlert && (
         <div
           className="fixed top-4 right-4 z-50 p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 shadow-lg"
@@ -211,30 +296,37 @@ function ProductsPageContent() {
           {error}
         </div>
       )}
-      <div className="flex items-center">
+      <div className="flex items-center mb-4">
+        <TabsList>
+          <TabsTrigger value="product">Product</TabsTrigger>
+          <TabsTrigger value="category">Category</TabsTrigger>
+        </TabsList>
         {searchQuery && (
-          <div className="mr-auto">
+          <div className="ml-4 mr-auto">
             <span className="text-sm text-muted-foreground">
               Search results for: <strong>"{searchQuery}"</strong>
             </span>
           </div>
         )}
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
-          <Button size="sm" className="h-8 gap-1" onClick={() => setShowAddModal(true)}>
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Product
-            </span>
-          </Button>
+          {activeTab === "product" ? (
+            <Button size="sm" className="h-8 gap-1" onClick={() => setShowAddModal(true)}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Product
+              </span>
+            </Button>
+          ) : (
+            <Button size="sm" className="h-8 gap-1" onClick={() => setShowAddCategoryModal(true)}>
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Category
+              </span>
+            </Button>
+          )}
         </div>
       </div>
-      <TabsContent value="all">
+      <TabsContent value="product">
         <ProductsTable
           products={products}
           offset={offset}
@@ -246,6 +338,14 @@ function ProductsPageContent() {
           categories={categories}
           suppliers={suppliers}
           user={user}
+        />
+      </TabsContent>
+      <TabsContent value="category">
+        <CategoriesTable
+          categories={categories}
+          setError={setError}
+          setShowAlert={setShowAlert}
+          refreshCategories={fetchCategories}
         />
       </TabsContent>
       {showAddModal && (
@@ -279,8 +379,12 @@ function ProductsPageContent() {
                     <input type="text" name="name" id="add-name" value={addValues.name} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Type product name" required />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <label htmlFor="add-price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Price</label>
-                    <input type="number" name="price" id="add-price" value={addValues.price} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="$2999" required />
+                    <label htmlFor="add-import-price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Import Price</label>
+                    <input type="number" name="import_price" id="add-import-price" value={addValues.import_price} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="$2000" required />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <label htmlFor="add-selling-price" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Selling Price</label>
+                    <input type="number" name="selling_price" id="add-selling-price" value={addValues.selling_price} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="$2999" required />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <label htmlFor="add-category" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Category</label>
@@ -300,6 +404,10 @@ function ProductsPageContent() {
                     <input type="number" name="quantity" id="add-quantity" value={addValues.quantity} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="100" required />
                   </div>
                   <div className="col-span-2 sm:col-span-1">
+                    <label htmlFor="add-unit" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Unit</label>
+                    <input type="text" name="unit" id="add-unit" value={addValues.unit} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="pcs, kg, box..." />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
                     <label htmlFor="add-supplier" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Supplier</label>
                     <select id="add-supplier" name="supplier_id" value={addValues.supplier_id} onChange={handleAddInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" required>
                       <option value="">Select supplier</option>
@@ -316,6 +424,52 @@ function ProductsPageContent() {
                     <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"></path>
                   </svg>
                   Add Product
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {showAddCategoryModal && (
+        <div
+          id="add-category-modal"
+          tabIndex={-1}
+          aria-hidden={!showAddCategoryModal}
+          className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-black bg-opacity-40"
+        >
+          <div className="relative p-4 w-full max-w-md max-h-full">
+            <div className="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
+              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Add New Category
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                  onClick={() => setShowAddCategoryModal(false)}
+                >
+                  <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                  </svg>
+                  <span className="sr-only">Close modal</span>
+                </button>
+              </div>
+              <form className="p-4 md:p-5" onSubmit={createCategory}>
+                <div className="grid gap-4 mb-4 grid-cols-2">
+                  <div className="col-span-2">
+                    <label htmlFor="cat-name" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Name</label>
+                    <input type="text" name="name" id="cat-name" value={addCategoryValues.name} onChange={handleAddCategoryInputChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Type category name" required />
+                  </div>
+                  <div className="col-span-2">
+                    <label htmlFor="cat-description" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Description</label>
+                    <textarea id="cat-description" name="description" rows={4} value={addCategoryValues.description} onChange={handleAddCategoryInputChange} className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Write category description here" />
+                  </div>
+                </div>
+                <button type="submit" className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
+                  <svg className="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"></path>
+                  </svg>
+                  Add Category
                 </button>
               </form>
             </div>

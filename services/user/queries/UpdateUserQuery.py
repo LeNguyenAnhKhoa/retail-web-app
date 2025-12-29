@@ -1,5 +1,5 @@
 from shared_utils import Database
-from models import UpdateUserModel
+from models import UpdateUserModel, AdminUpdateUserModel
 
 class UpdateUserQuery:
     def __init__(self):
@@ -18,6 +18,38 @@ class UpdateUserQuery:
             user_email
         )
         res = self.db.execute_query(query, params)
+        if res is None:
+            return False
+        return True
+
+    def update_user_by_id(self, update_user: AdminUpdateUserModel):
+        # Build query dynamically based on provided fields
+        fields = []
+        params = []
+
+        if update_user.username:
+            fields.append("username = %s")
+            params.append(update_user.username)
+        
+        if update_user.full_name:
+            fields.append("full_name = %s")
+            params.append(update_user.full_name)
+            
+        if update_user.phone:
+            fields.append("phone = %s")
+            params.append(update_user.phone)
+            
+        if update_user.role:
+            fields.append("role = %s")
+            params.append(update_user.role)
+
+        if not fields:
+            return True # Nothing to update
+
+        query = f"UPDATE users SET {', '.join(fields)} WHERE user_id = %s"
+        params.append(update_user.user_id)
+
+        res = self.db.execute_query(query, tuple(params))
         if res is None:
             return False
         return True

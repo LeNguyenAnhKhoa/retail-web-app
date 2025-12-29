@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Request, Depends
+from typing import Optional
 from shared_config import StandardResponse, standard_response
 from shared_utils import login_required
 from controllers import *
-from models import LoginModel, RegisterModel, TokensModel, UpdateUserModel
+from models import LoginModel, RegisterModel, TokensModel, UpdateUserModel, AdminUpdateUserModel
 
 router = APIRouter()
 
@@ -38,6 +39,13 @@ def update_user_info(updated_user: UpdateUserModel, user_info: int = Depends(log
     controller.execute(updated_user, user_info)
     return {}
 
+@router.post("/update-user-by-admin", response_model=StandardResponse)
+@standard_response
+def update_user_by_admin(updated_user: AdminUpdateUserModel, user_info: dict = Depends(login_required)):
+    controller = UpdateUserByAdminController()
+    controller.execute(updated_user, user_info)
+    return {}
+
 
 @router.post("/logout", response_model=StandardResponse)
 @standard_response
@@ -64,9 +72,9 @@ def activate_user(user_id: int, user_info: dict = Depends(login_required)):
 
 @router.get("/get-all-users", response_model=StandardResponse)
 @standard_response
-def get_all_users(user_info: dict = Depends(login_required)):
+def get_all_users(search: Optional[str] = None, user_info: dict = Depends(login_required)):
     controller = GetAllUsersController()
-    response = controller.execute(user_info)
+    response = controller.execute(user_info, search)
     return response
 
 @router.post("/deactivate-user", response_model=StandardResponse)
@@ -89,3 +97,10 @@ def get_monthly_sales(user_info: dict = Depends(login_required)):
     controller = MonthlySalesController()
     response = controller.execute(user_info)
     return response
+
+@router.delete("/delete-user", response_model=StandardResponse)
+@standard_response
+def delete_user(user_id: int, user_info: dict = Depends(login_required)):
+    controller = DeleteUserController()
+    controller.execute(user_id, user_info)
+    return {}
