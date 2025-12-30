@@ -113,6 +113,9 @@ export function Order({ order, onClick, setError, setShowAlert, onStatusUpdate }
         {formatCurrencyValue(order.total_amount)}
       </TableCell>
       <TableCell className="hidden md:table-cell">
+        {formatCurrencyValue(order.total_receive)}
+      </TableCell>
+      <TableCell className="hidden md:table-cell">
         {order.payment_method || "N/A"}
       </TableCell>
       <TableCell className="hidden md:table-cell">

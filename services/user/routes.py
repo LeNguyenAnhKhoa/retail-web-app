@@ -3,7 +3,7 @@ from typing import Optional
 from shared_config import StandardResponse, standard_response
 from shared_utils import login_required
 from controllers import *
-from models import LoginModel, RegisterModel, TokensModel, UpdateUserModel, AdminUpdateUserModel
+from models import LoginModel, RegisterModel, TokensModel, UpdateUserModel, AdminUpdateUserModel, RefreshTokenModel
 
 router = APIRouter()
 
@@ -58,9 +58,9 @@ def logout(refresh_token: str, request: Request, user_info: dict = Depends(login
 
 @router.post("/get-new-access-token", response_model=StandardResponse)
 @standard_response
-def get_new_access_token(refresh_token: str):
+def get_new_access_token(payload: RefreshTokenModel):
     controller = GetNewAccessTokenController()
-    response = controller.execute(refresh_token)
+    response = controller.execute(payload.refresh_token)
     return response
 
 @router.post("/activate-user", response_model=StandardResponse)

@@ -223,7 +223,6 @@ class SupplierController:
        
         # Nullify references in other tables to avoid foreign key constraints
         self.db.execute_query(SupplierQueries.NULLIFY_PRODUCT_SUPPLIER, (supplier_id,))
-        self.db.execute_query(SupplierQueries.NULLIFY_INVENTORY_TICKET_SUPPLIER, (supplier_id,))
 
         # Delete supplier
         res = self.db.execute_query(SupplierQueries.DELETE_SUPPLIER, (supplier_id,))

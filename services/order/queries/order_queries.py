@@ -1,6 +1,6 @@
 class OrderQueries:
     GET_ALL_ORDERS = """
-        SELECT v.*, u.username 
+        SELECT v.*, u.username, (SELECT COALESCE(SUM(receive), 0) FROM order_details WHERE order_id = v.order_id) as total_receive
         FROM order_summary_view v
         JOIN users u ON v.user_id = u.user_id
         ORDER BY v.created_at DESC, v.order_id ASC;
@@ -31,34 +31,6 @@ class OrderQueries:
         SELECT order_id, customer_id, status, order_date, created_time, updated_time
         FROM orders
         WHERE order_id = %s;
-    """
-
-    GET_RECENT_COMPLETED_ORDERS = """
-        SELECT 
-            o.order_id, 
-            c.name as customer_name, 
-            o.total_amount, 
-            o.status, 
-            o.created_at 
-        FROM orders o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
-        WHERE o.status = 'COMPLETED'
-        ORDER BY o.created_at DESC
-        LIMIT 5;
-    """
-
-    GET_RECENT_COMPLETED_ORDERS_BY_USER = """
-        SELECT 
-            o.order_id, 
-            c.name as customer_name, 
-            o.total_amount, 
-            o.status, 
-            o.created_at 
-        FROM orders o
-        LEFT JOIN customers c ON o.customer_id = c.customer_id
-        WHERE o.status = 'COMPLETED' AND o.user_id = %s
-        ORDER BY o.created_at DESC
-        LIMIT 5;
     """
 
     # Legacy queries (kept for compatibility)
@@ -100,7 +72,7 @@ class OrderQueries:
     """
     
     GET_ALL_ORDERS_WITH_SEARCH = """
-        SELECT v.*, u.username
+        SELECT v.*, u.username, (SELECT COALESCE(SUM(receive), 0) FROM order_details WHERE order_id = v.order_id) as total_receive
         FROM order_summary_view v
         JOIN users u ON v.user_id = u.user_id
         WHERE CAST(v.order_id AS CHAR) LIKE %s OR v.customer_name LIKE %s

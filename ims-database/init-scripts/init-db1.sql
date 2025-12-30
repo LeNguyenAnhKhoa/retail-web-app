@@ -1,6 +1,4 @@
 -- DELETE ALL TABLES BEFORE RECREATING
-DROP TABLE IF EXISTS inventory_ticket_details;
-DROP TABLE IF EXISTS inventory_tickets;
 DROP TABLE IF EXISTS order_details;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;
@@ -120,31 +118,4 @@ CREATE TABLE order_details (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_orderdetails_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
     CONSTRAINT fk_orderdetails_product FOREIGN KEY (product_id) REFERENCES products(product_id)
-);
-
--- INVENTORY SYSTEM (WAREHOUSE)
-
-CREATE TABLE inventory_tickets (
-    ticket_id INT AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(50) NOT NULL UNIQUE,
-    type ENUM('IMPORT', 'EXPORT_CANCEL', 'STOCK_CHECK') NOT NULL,
-    supplier_id INT,
-    user_id INT NOT NULL,
-    note TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_inventorytickets_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id),
-    CONSTRAINT fk_inventorytickets_user FOREIGN KEY (user_id) REFERENCES users(user_id)
-);
-
-CREATE TABLE inventory_ticket_details (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ticket_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL,
-    price DECIMAL(10, 2),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_ticketdetails_ticket FOREIGN KEY (ticket_id) REFERENCES inventory_tickets(ticket_id),
-    CONSTRAINT fk_ticketdetails_product FOREIGN KEY (product_id) REFERENCES products(product_id)
 );

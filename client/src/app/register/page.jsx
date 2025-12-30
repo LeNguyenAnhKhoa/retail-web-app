@@ -18,6 +18,7 @@ export default function RegisterPage() {
 
     const formData = new FormData(e.currentTarget);
     const username = formData.get("username");
+    const full_name = formData.get("full_name");
     const email = formData.get("email");
     const password = formData.get("password");
     const phone = formData.get("phone");
@@ -27,7 +28,7 @@ export default function RegisterPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, email, password, phone }),
+          body: JSON.stringify({ username, full_name, email, password, phone }),
         }
       );
 
@@ -95,6 +96,22 @@ export default function RegisterPage() {
               name="username"
               type="text"
               placeholder="John Doe"
+              required
+              className="mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:border-black focus:ring-black sm:text-sm"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="full_name"
+              className="block text-xs text-gray-600 uppercase"
+            >
+              Full Name
+            </label>
+            <input
+              id="full_name"
+              name="full_name"
+              type="text"
+              placeholder="Nguyen Van A"
               required
               className="mt-1 block w-full rounded-md border px-3 py-2 shadow-sm focus:border-black focus:ring-black sm:text-sm"
             />

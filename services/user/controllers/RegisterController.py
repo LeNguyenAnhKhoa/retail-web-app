@@ -18,13 +18,14 @@ class RegisterController:
         password = payload.password
         username = payload.username
         phone = payload.phone
+        full_name = payload.full_name
         
         # Email must be valid type
-        if not email or not password or not username or not phone:
+        if not email or not password or not username or not phone or not full_name:
             self.query.close()
             raise InvalidDataException("Invalid payload")
 
-        if not isinstance(email, str) or not isinstance(password, str) or not isinstance(username, str) or not isinstance(phone, str):
+        if not isinstance(email, str) or not isinstance(password, str) or not isinstance(username, str) or not isinstance(phone, str) or not isinstance(full_name, str):
             self.query.close()
             raise InvalidDataException("Invalid payload")
 
@@ -55,6 +56,12 @@ class RegisterController:
         if res:
             self.query.close()
             raise InvalidDataException("Email already exists")
+            
+        res = self.query.check_phone_exists(phone)
+        if res:
+            self.query.close()
+            raise InvalidDataException("Phone number already exists")
+
         # Hash the password
         hashed_password = self.__hash_password(password)
         payload.password = hashed_password

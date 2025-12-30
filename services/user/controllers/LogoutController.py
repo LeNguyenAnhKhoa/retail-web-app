@@ -15,19 +15,21 @@ class LogoutController:
         user_id = user_info.get("user_id")
         if not user_id or not refresh_token:
             self.query.close()
-            raise InvalidDataException("Invalid data provided")
+            raise InvalidDataException("Invalid data provided: Missing user_id or refresh_token")
         
         if not isinstance(user_id, int):
             self.query.close()
-            raise InvalidDataException("Invalid data provided")
+            raise InvalidDataException("Invalid data provided: user_id is not an integer")
         
         if not isinstance(refresh_token, str):
             self.query.close()
-            raise InvalidDataException("Invalid data provided")
+            raise InvalidDataException("Invalid data provided: refresh_token is not a string")
         
-        if not self.query.check_if_refresh_token_exists(user_id, refresh_token):
-            self.query.close()
-            raise InvalidDataException("Invalid data provided")
+        # We don't strictly need to check if it exists. If it doesn't, we just proceed to blacklist the access token.
+        # This handles cases where the DB was reset but the user still has a valid JWT.
+        # if not self.query.check_if_refresh_token_exists(user_id, refresh_token):
+        #     self.query.close()
+        #     raise InvalidDataException("Invalid data provided")
         
         res = self.query.delete_refresh_token(user_id, refresh_token)
         self.query.close()

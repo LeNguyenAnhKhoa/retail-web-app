@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { File, PlusCircle, Search, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OrdersTable } from './orders-table';
@@ -144,7 +143,6 @@ function OrdersPageContent() {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState(null);
   const [showAlert, setShowAlert] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
   const [offsets, setOffsets] = useState({
     all: 0,
     pending: 0,
@@ -531,21 +529,11 @@ function OrdersPageContent() {
     }
   }
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-
   // Filter orders by status for different tabs
   const allOrders = orders;
-  const pendingOrders = orders.filter(order => order.order_status === "pending");
-  const completedOrders = orders.filter(order => order.order_status === "completed");
-  const cancelledOrders = orders.filter(order => order.order_status === "cancelled");
 
   // Paginate orders for each tab using their individual offsets
   const paginatedAllOrders = allOrders.slice(offsets.all, offsets.all + limit);
-  const paginatedPendingOrders = pendingOrders.slice(offsets.pending, offsets.pending + limit);
-  const paginatedCompletedOrders = completedOrders.slice(offsets.completed, offsets.completed + limit);
-  const paginatedCancelledOrders = cancelledOrders.slice(offsets.cancelled, offsets.cancelled + limit);
 
   // Function to refresh orders after status update
   const handleStatusUpdate = async () => {
@@ -591,21 +579,12 @@ function OrdersPageContent() {
         </div>
       )}
       
-      <Tabs defaultValue="all" onValueChange={handleTabChange}>
       {showAlert && (
         <div className="fixed top-4 right-4 z-50 p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 shadow-lg" role="alert">
           {error}
         </div>
       )}
       <div className="flex items-center">
-        <TabsList>
-          <TabsTrigger value="all">All ({allOrders.length})</TabsTrigger>
-          <TabsTrigger value="pending">Pending ({pendingOrders.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedOrders.length})</TabsTrigger>
-          <TabsTrigger value="cancelled" className="hidden sm:flex">
-            Cancelled ({cancelledOrders.length})
-          </TabsTrigger>
-        </TabsList>
         <div className="ml-auto flex items-center gap-2">
           <Button size="sm" variant="outline" className="h-8 gap-1">
             <File className="h-3.5 w-3.5" />
@@ -621,54 +600,17 @@ function OrdersPageContent() {
           </Button>
         </div>
       </div>
-      <TabsContent value="all">
-        <OrdersTable
-          orders={paginatedAllOrders}
-          offset={offsets.all}
-          setOffset={(newOffset) => setOffsets(prev => ({ ...prev, all: newOffset }))}
-          totalOrders={allOrders.length}
-          limit={limit}
-          setError={setError}
-          setShowAlert={setShowAlert}
-          onStatusUpdate={handleStatusUpdate}
-        />
-      </TabsContent>
-      <TabsContent value="pending">
-        <OrdersTable
-          orders={paginatedPendingOrders}
-          offset={offsets.pending}
-          setOffset={(newOffset) => setOffsets(prev => ({ ...prev, pending: newOffset }))}
-          totalOrders={pendingOrders.length}
-          limit={limit}
-          setError={setError}
-          setShowAlert={setShowAlert}
-          onStatusUpdate={handleStatusUpdate}
-        />
-      </TabsContent>
-      <TabsContent value="completed">
-        <OrdersTable
-          orders={paginatedCompletedOrders}
-          offset={offsets.completed}
-          setOffset={(newOffset) => setOffsets(prev => ({ ...prev, completed: newOffset }))}
-          totalOrders={completedOrders.length}
-          limit={limit}
-          setError={setError}
-          setShowAlert={setShowAlert}
-          onStatusUpdate={handleStatusUpdate}
-        />
-      </TabsContent>
-      <TabsContent value="cancelled">
-        <OrdersTable
-          orders={paginatedCancelledOrders}
-          offset={offsets.cancelled}
-          setOffset={(newOffset) => setOffsets(prev => ({ ...prev, cancelled: newOffset }))}
-          totalOrders={cancelledOrders.length}
-          limit={limit}
-          setError={setError}
-          setShowAlert={setShowAlert}
-          onStatusUpdate={handleStatusUpdate}
-        />
-      </TabsContent>
+      
+      <OrdersTable
+        orders={paginatedAllOrders}
+        offset={offsets.all}
+        setOffset={(newOffset) => setOffsets(prev => ({ ...prev, all: newOffset }))}
+        totalOrders={allOrders.length}
+        limit={limit}
+        setError={setError}
+        setShowAlert={setShowAlert}
+        onStatusUpdate={handleStatusUpdate}
+      />
 
       {/* Add Order Modal */}
       {showAddModal && (
@@ -909,7 +851,6 @@ function OrdersPageContent() {
           </div>
         </div>
       )}
-    </Tabs>
     </div>
   );
 }

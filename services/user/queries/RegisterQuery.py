@@ -20,6 +20,18 @@ class RegisterQuery:
         if not result:
             return False
         return True
+
+    def check_phone_exists(self, phone: str):
+        query = '''SELECT 
+            user_id
+            FROM users 
+            WHERE phone = %s
+        '''
+        params = (phone,)
+        result = self.db.execute_query(query, params)
+        if not result:
+            return False
+        return True
     
     def create_user(self, payload: RegisterModel):
         query = """
@@ -33,7 +45,7 @@ class RegisterQuery:
             payload.username,
             payload.email,
             payload.password,
-            payload.username,  # Use username as full_name for now
+            payload.full_name,
             payload.phone,
             "STAFF",  # Default role
             random_image_url,

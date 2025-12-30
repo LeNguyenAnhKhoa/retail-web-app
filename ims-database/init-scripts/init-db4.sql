@@ -35,17 +35,6 @@ CREATE INDEX idx_suppliers_phone ON suppliers(phone);
 -- Categories indexes
 CREATE INDEX idx_categories_name ON categories(name);
 
--- Inventory tickets indexes
-CREATE INDEX idx_inventory_tickets_code ON inventory_tickets(code);
-CREATE INDEX idx_inventory_tickets_type ON inventory_tickets(type);
-CREATE INDEX idx_inventory_tickets_supplier ON inventory_tickets(supplier_id);
-CREATE INDEX idx_inventory_tickets_user ON inventory_tickets(user_id);
-CREATE INDEX idx_inventory_tickets_created_at ON inventory_tickets(created_at);
-
--- Inventory ticket details indexes
-CREATE INDEX idx_inventory_ticket_details_ticket ON inventory_ticket_details(ticket_id);
-CREATE INDEX idx_inventory_ticket_details_product ON inventory_ticket_details(product_id);
-
 -- Stored Procedures
 
 -- Procedure: Create Order with Details
@@ -128,71 +117,6 @@ BEGIN
     
     COMMIT;
     SELECT v_order_id AS order_id, v_total_amount AS total_amount;
-END$$
-
-DELIMITER ;
-
--- Procedure: Create Inventory Ticket with Details
-DELIMITER $$
-
-CREATE PROCEDURE CreateInventoryTicketWithDetails(
-    IN p_ticket_code VARCHAR(50),
-    IN p_type ENUM('IMPORT', 'EXPORT_CANCEL', 'STOCK_CHECK'),
-    IN p_supplier_id INT,
-    IN p_user_id INT,
-    IN p_note TEXT,
-    IN p_product_ids TEXT,     -- comma-separated
-    IN p_quantities TEXT,       -- comma-separated (positive for IMPORT, negative for EXPORT_CANCEL)
-    IN p_prices TEXT            -- comma-separated (only for IMPORT)
-)
-BEGIN
-    DECLARE v_ticket_id INT;
-    DECLARE i INT DEFAULT 1;
-    DECLARE n INT;
-    DECLARE v_product_id INT;
-    DECLARE v_quantity INT;
-    DECLARE v_price DECIMAL(10,2);
-    
-    -- Start transaction
-    START TRANSACTION;
-    
-    -- Insert ticket
-    INSERT INTO inventory_tickets (code, type, supplier_id, user_id, note)
-    VALUES (p_ticket_code, p_type, p_supplier_id, p_user_id, p_note);
-    
-    SET v_ticket_id = LAST_INSERT_ID();
-    
-    -- Count number of items
-    SET n = (LENGTH(p_product_ids) - LENGTH(REPLACE(p_product_ids, ',', '')) + 1);
-    
-    -- Insert ticket details and update stock
-    WHILE i <= n DO
-        SET v_product_id = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_product_ids, ',', i), ',', -1) AS UNSIGNED);
-        SET v_quantity = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_quantities, ',', i), ',', -1) AS SIGNED);
-        
-        IF p_prices IS NOT NULL AND p_prices != '' THEN
-            SET v_price = CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(p_prices, ',', i), ',', -1) AS DECIMAL(10,2));
-        ELSE
-            SET v_price = NULL;
-        END IF;
-        
-        -- Insert ticket detail
-        INSERT INTO inventory_ticket_details (ticket_id, product_id, quantity, price)
-        VALUES (v_ticket_id, v_product_id, v_quantity, v_price);
-        
-        -- Update product stock
-        UPDATE products SET stock_quantity = stock_quantity + v_quantity WHERE product_id = v_product_id;
-        
-        -- Update import price if it's an import ticket
-        IF p_type = 'IMPORT' AND v_price IS NOT NULL THEN
-            UPDATE products SET import_price = v_price WHERE product_id = v_product_id;
-        END IF;
-        
-        SET i = i + 1;
-    END WHILE;
-    
-    COMMIT;
-    SELECT v_ticket_id AS ticket_id;
 END$$
 
 DELIMITER ;

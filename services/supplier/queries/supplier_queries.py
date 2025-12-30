@@ -71,7 +71,3 @@ class SupplierQueries:
     NULLIFY_PRODUCT_SUPPLIER = """
         UPDATE products SET supplier_id = NULL WHERE supplier_id = %s;
     """
-
-    NULLIFY_INVENTORY_TICKET_SUPPLIER = """
-        UPDATE inventory_tickets SET supplier_id = NULL WHERE supplier_id = %s;
-    """
