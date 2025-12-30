@@ -54,6 +54,17 @@ class UpdateUserQuery:
             return False
         return True
     
+    def check_phone_exists_exclude_user(self, phone: str, user_id: int):
+        query = '''SELECT 
+            user_id
+            FROM users 
+            WHERE phone = %s AND user_id != %s
+        '''
+        params = (phone, user_id)
+        result = self.db.execute_query(query, params)
+        if not result:
+            return False
+        return True
     
     def close(self):
         self.db.close_pool()

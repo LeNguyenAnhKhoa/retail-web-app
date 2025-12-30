@@ -126,10 +126,6 @@ python main.py
 # Terminal 6 - Supplier Service (Port 8005)
 cd services\supplier
 python main.py
-
-# Terminal 7 - Inventory Service (Port 8007)
-cd services\inventory
-python main.py
 ```
 
 > **Lưu ý:** Mỗi service đã có uvicorn runner trong main.py, không cần gọi uvicorn trực tiếp.
