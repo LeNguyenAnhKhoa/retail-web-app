@@ -85,18 +85,26 @@ function DesktopNav() {
         <NavItem href="/" label="Dashboard">
           <Home className="h-5 w-5" />
         </NavItem>
-        <NavItem href="/orders" label="Orders">
-          <ShoppingCart className="h-5 w-5" />
-        </NavItem>
-        <NavItem href="/products" label="Products">
-          <Package className="h-5 w-5" />
-        </NavItem>
-        <NavItem href="/suppliers" label="Suppliers">
-          <Cable className="h-5 w-5" />
-        </NavItem>
-        <NavItem href="/customers" label="Customers">
-          <Contact className="h-5 w-5" />
-        </NavItem>
+        {user?.role_name !== "STOCKKEEPER" && (
+          <NavItem href="/orders" label="Orders">
+            <ShoppingCart className="h-5 w-5" />
+          </NavItem>
+        )}
+        {user?.role_name && user.role_name !== "STAFF" && (
+          <NavItem href="/products" label="Products">
+            <Package className="h-5 w-5" />
+          </NavItem>
+        )}
+        {user?.role_name && user.role_name !== "STAFF" && (
+          <NavItem href="/suppliers" label="Suppliers">
+            <Cable className="h-5 w-5" />
+          </NavItem>
+        )}
+        {user?.role_name !== "STOCKKEEPER" && (
+          <NavItem href="/customers" label="Customers">
+            <Contact className="h-5 w-5" />
+          </NavItem>
+        )}
 
         {user?.role_name === "MANAGER" && (
           <NavItem href="/users" label="Users">
@@ -156,22 +164,30 @@ function MobileNav() {
             <Home className="h-5 w-5" />
             Dashboard
           </Link>
-          <Link href="/orders" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-            <ShoppingCart className="h-5 w-5" />
-            Orders
-          </Link>
-          <Link href="/products" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-            <Package className="h-5 w-5" />
-            Products
-          </Link>
-          <Link href="/suppliers" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-            <Cable className="h-5 w-5" />
-            Suppliers
-          </Link>
-          <Link href="/customers" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
-            <Contact className="h-5 w-5" />
-            Customers
-          </Link>
+          {user?.role_name !== "STOCKKEEPER" && (
+            <Link href="/orders" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <ShoppingCart className="h-5 w-5" />
+              Orders
+            </Link>
+          )}
+          {user?.role_name && user.role_name !== "STAFF" && (
+            <Link href="/products" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <Package className="h-5 w-5" />
+              Products
+            </Link>
+          )}
+          {user?.role_name && user.role_name !== "STAFF" && (
+            <Link href="/suppliers" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <Cable className="h-5 w-5" />
+              Suppliers
+            </Link>
+          )}
+          {user?.role_name !== "STOCKKEEPER" && (
+            <Link href="/customers" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">
+              <Contact className="h-5 w-5" />
+              Customers
+            </Link>
+          )}
 
           {user?.role_name === "MANAGER" && (
             <Link href="/users" className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground">

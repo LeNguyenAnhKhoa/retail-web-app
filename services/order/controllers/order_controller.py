@@ -51,7 +51,7 @@ class OrderController:
         return order_data
 
     def get_all_orders(self, user_info, search=None):
-        role_name = user_info.get("role_name", "").lower()
+        role_name = user_info.get("role_name", "").lower().strip()
         if role_name not in ["admin", "staff", "manager", "stockkeeper"]:
             raise BadRequestException("Only admin, manager, staff, and stockkeeper can retrieve orders")
         
@@ -91,6 +91,7 @@ class OrderController:
                 "created_at": row[14],
                 "updated_at": row[15],
                 "username": row[16],
+                "total_receive": row[17],
             }
             if orders and orders[-1].get("order_id") == order_data.get("order_id"):
                 continue
@@ -98,7 +99,7 @@ class OrderController:
         return orders
 
     def get_order(self, order_id: int, user_info: dict):
-        role_name = user_info.get("role_name", "").lower()
+        role_name = user_info.get("role_name", "").lower().strip()
         
         if not role_name:
             raise BadRequestException("Role Name is required")
@@ -332,21 +333,28 @@ class OrderController:
 
     def get_recent_completed_orders(self, user_info):
         user_id = user_info.get("user_id")
-        role_name = user_info.get("role_name", "").lower()
+        role_name = user_info.get("role_name", "").lower().strip()
+        
+        logger.info(f"get_recent_completed_orders called - user_id: {user_id}, role_name: {role_name}")
         
         if not user_id:
             raise BadRequestException("User ID is required to retrieve orders")
         if role_name not in ["admin", "staff", "manager", "stockkeeper"]:
+            logger.warning(f"Role '{role_name}' not authorized for recent orders")
             raise BadRequestException("Only admin, manager, staff, and stockkeeper can retrieve orders")
         
-        # Admin/Manager can see all recent completed orders, staff/stockkeeper only sees their own orders
-        if role_name in ("admin", "manager"):
+        # Admin/Manager/Stockkeeper can see all recent completed orders, staff only sees their own orders
+        if role_name in ["admin", "manager", "stockkeeper"]:
+            logger.info(f"Fetching all recent completed orders for role: {role_name}")
             result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS)
-        else:  # staff, stockkeeper
+        else:  # staff
+            logger.info(f"Fetching recent completed orders for staff user_id: {user_id}")
             result = self.db.execute_query(OrderQueries.GET_RECENT_COMPLETED_ORDERS_BY_USER, (user_id,))
         
         if result is None:
             raise Exception("Failed to retrieve recent completed orders from the database")
+        
+        logger.info(f"Query returned {len(result)} rows")
         
         orders = []
         for row in result:
@@ -358,4 +366,5 @@ class OrderController:
             }
             orders.append(order_data)
         
+        logger.info(f"Returning {len(orders)} recent completed orders")
         return orders

@@ -95,51 +95,6 @@ GROUP BY
     o.user_id, u.full_name, u.role, o.total_amount, o.payment_method, 
     o.status, o.created_at, o.updated_at;
 
--- Inventory ticket view
-CREATE OR REPLACE VIEW inventory_ticket_summary_view AS
-SELECT 
-    it.ticket_id,
-    it.code AS ticket_code,
-    it.type AS ticket_type,
-    it.supplier_id,
-    s.name AS supplier_name,
-    it.user_id,
-    u.full_name AS created_by_name,
-    u.role AS created_by_role,
-    it.note,
-    COUNT(DISTINCT itd.id) AS total_items,
-    SUM(itd.quantity) AS total_quantity,
-    COALESCE(SUM(itd.quantity * itd.price), 0) AS total_value,
-    it.created_at,
-    it.updated_at
-FROM 
-    inventory_tickets it
-    LEFT JOIN suppliers s ON it.supplier_id = s.supplier_id
-    INNER JOIN users u ON it.user_id = u.user_id
-    LEFT JOIN inventory_ticket_details itd ON it.ticket_id = itd.ticket_id
-GROUP BY 
-    it.ticket_id, it.code, it.type, it.supplier_id, s.name, 
-    it.user_id, u.full_name, u.role, it.note, it.created_at, it.updated_at;
-
--- Stock movement view
-CREATE OR REPLACE VIEW stock_movement_view AS
-SELECT 
-    p.product_id,
-    p.code AS product_code,
-    p.name AS product_name,
-    p.stock_quantity AS current_stock,
-    COALESCE(SUM(CASE WHEN it.type = 'IMPORT' THEN itd.quantity ELSE 0 END), 0) AS total_imported,
-    COALESCE(SUM(CASE WHEN it.type = 'EXPORT_CANCEL' THEN ABS(itd.quantity) ELSE 0 END), 0) AS total_exported,
-    COALESCE(SUM(CASE WHEN it.type = 'STOCK_CHECK' THEN itd.quantity ELSE 0 END), 0) AS total_adjusted,
-    COALESCE(SUM(od.quantity), 0) AS total_sold
-FROM 
-    products p
-    LEFT JOIN inventory_ticket_details itd ON p.product_id = itd.product_id
-    LEFT JOIN inventory_tickets it ON itd.ticket_id = it.ticket_id
-    LEFT JOIN order_details od ON p.product_id = od.product_id
-GROUP BY 
-    p.product_id, p.code, p.name, p.stock_quantity;
-
 -- Sales report view (for revenue and profit)
 CREATE OR REPLACE VIEW sales_report_view AS
 SELECT 

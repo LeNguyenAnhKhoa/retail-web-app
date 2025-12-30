@@ -41,29 +41,6 @@ INSERT INTO customers (name, phone, address) VALUES
 ('Trần Văn Mua Sỉ', '0922222222', '456 Lê Văn Việt, Q9, TP.HCM'),
 ('Phạm Thị Thường Xuyên', '0933333333', '789 Võ Văn Kiệt, Q6, TP.HCM');
 
--- Insert Inventory Tickets (Nhập hàng)
-INSERT INTO inventory_tickets (code, type, supplier_id, user_id, note) VALUES 
-('NK001', 'IMPORT', 1, 3, 'Nhập hàng đợt 1 từ Coca Cola'),
-('NK002', 'IMPORT', 3, 3, 'Nhập hàng mì gói từ Acecook'),
-('XK001', 'EXPORT_CANCEL', NULL, 3, 'Xuất hủy hàng hết hạn'),
-('KK001', 'STOCK_CHECK', NULL, 3, 'Kiểm kê định kỳ tháng 11');
-
--- Insert Inventory Ticket Details
-INSERT INTO inventory_ticket_details (ticket_id, product_id, quantity, price) VALUES 
--- Nhập hàng đợt 1
-(1, 1, 100, 6000),
-(1, 2, 150, 5500),
-(1, 3, 80, 7000),
--- Nhập hàng mì
-(2, 6, 300, 3500),
-(2, 7, 250, 3000),
--- Xuất hủy (số âm)
-(3, 1, -5, NULL),
-(3, 6, -10, NULL),
--- Kiểm kê điều chỉnh
-(4, 1, 5, NULL),
-(4, 4, -2, NULL);
-
 -- Insert Orders (created by staff1 - user_id=2)
 INSERT INTO orders (code, customer_id, user_id, total_amount, payment_method, status) VALUES 
 ('HD001', 1, 2, 45000, 'CASH', 'COMPLETED'),
