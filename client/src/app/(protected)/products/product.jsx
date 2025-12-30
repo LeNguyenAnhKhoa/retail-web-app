@@ -16,6 +16,7 @@ import { useState, useRef } from "react";
 export function Product({ product, categories, setError, setShowAlert, suppliers, user }) {
   const [showModal, setShowModal] = useState(false);
   const modalRef = useRef();
+  const [imageError, setImageError] = useState(false);
 
   // Modal state for editing
   const [editValues, setEditValues] = useState({
@@ -30,6 +31,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
     category_id: product.category_id || "",
     supplier: product.supplier_name || product.supplier?.name || "",
     category_name: product.category_name || "",
+    image_url: product.image_url || "",
   });
 
   function handleInputChange(e) {
@@ -109,7 +111,7 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
         description: editValues.description,
         stock_quantity: parseInt(editValues.quantity, 10),
         unit: editValues.unit,
-        image_url: product.image_url, // keep original image_url (or use editValues if you allow editing)
+        image_url: editValues.image_url, // keep original image_url (or use editValues if you allow editing)
         category_id: editValues.category_id || product.category_id,
         supplier_id: editValues.supplier_id || product.supplier_id,
       };
@@ -148,7 +150,8 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
           className="aspect-square rounded-md object-cover"
           width={40}
           height={40}
-          src={product.image_url || "https://api.dicebear.com/9.x/pixel-art/svg"}
+          src={(!imageError && product.image_url) ? product.image_url : `https://api.dicebear.com/9.x/identicon/svg?seed=${product.name}`}
+          onError={() => setImageError(true)}
         />
       </TableCell>
       <TableCell className="font-medium">
@@ -391,6 +394,23 @@ export function Product({ product, categories, setError, setShowAlert, suppliers
                         onChange={handleInputChange}
                         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
                         placeholder="pcs, kg, box..."
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label
+                        htmlFor="image_url"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Image URL
+                      </label>
+                      <input
+                        type="text"
+                        name="image_url"
+                        id="image_url"
+                        value={editValues.image_url}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        placeholder="https://example.com/image.jpg"
                       />
                     </div>
                     <div className="col-span-2 sm:col-span-1">
