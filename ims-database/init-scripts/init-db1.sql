@@ -16,7 +16,7 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
-    phone VARCHAR(50) NOT NULL,
+    phone VARCHAR(50) NOT NULL UNIQUE,
     role ENUM('MANAGER', 'STAFF', 'STOCKKEEPER') NOT NULL DEFAULT 'STAFF',
     image_url TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -48,9 +48,9 @@ CREATE TABLE suppliers (
     supplier_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     contact_name VARCHAR(255),
-    phone VARCHAR(50),
+    phone VARCHAR(50) UNIQUE,
     address TEXT,
-    email VARCHAR(255),
+    email VARCHAR(255) UNIQUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -83,7 +83,7 @@ CREATE TABLE products (
 CREATE TABLE customers (
     customer_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
-    phone VARCHAR(50),
+    phone VARCHAR(50) UNIQUE,
     address TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

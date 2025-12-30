@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from shared_utils.database import Database
 from queries.order_queries import OrderQueries
 from models.order import OrderResponse, OrderCreateData, OrderDetailData, Order, OrderDetail
@@ -7,6 +8,12 @@ from shared_utils.logger import logger
 from shared_config.custom_exception import BadRequestException, NotFoundException
 import datetime
 import uuid
+import io
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg') # Use non-interactive backend
+
 
 class OrderController:
     def __init__(self):
@@ -368,3 +375,93 @@ class OrderController:
         
         logger.info(f"Returning {len(orders)} recent completed orders")
         return orders
+
+    def export_sales_report(self, start_date: str, end_date: str, user_info: dict):
+        role_name = user_info.get("role_name", "").lower().strip()
+        if role_name not in ["admin", "manager"]:
+            raise BadRequestException("Only admin and manager can export reports")
+
+        if start_date > end_date:
+            raise BadRequestException("Invalid filter time")
+
+        # Add time to dates to cover full days
+        start_dt = f"{start_date} 00:00:00"
+        end_dt = f"{end_date} 23:59:59"
+
+        result = self.db.execute_query(OrderQueries.GET_SALES_REPORT, (start_dt, end_dt))
+        
+        dates = []
+        revenues = []
+        orders_count = []
+        
+        if result:
+            dates = [row[0].strftime('%Y-%m-%d') for row in result]
+            orders_count = [row[1] for row in result]
+            revenues = [float(row[2]) for row in result]
+
+        total_revenue = sum(revenues)
+        total_orders = sum(orders_count)
+
+        # Create chart
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+
+        color = 'tab:blue'
+        ax1.set_xlabel('Date')
+        ax1.set_ylabel('Revenue', color=color)
+        ax1.bar(dates if dates else ['No Data'], revenues if revenues else [0], color=color, alpha=0.6, label='Revenue')
+        ax1.tick_params(axis='y', labelcolor=color)
+        plt.xticks(rotation=45)
+
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+        color = 'tab:red'
+        ax2.set_ylabel('Orders', color=color)  # we already handled the x-label with ax1
+        ax2.plot(dates if dates else ['No Data'], orders_count if orders_count else [0], color=color, marker='o', linestyle='-', label='Orders')
+        ax2.tick_params(axis='y', labelcolor=color)
+
+        plt.title(f'Sales Report ({start_date} to {end_date})\nTotal Revenue: {total_revenue:,.2f} - Total Orders: {total_orders}')
+        fig.tight_layout()  # otherwise the right y-label is slightly clipped
+
+        # Save to buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        plt.close(fig)
+
+        return StreamingResponse(buf, media_type="image/png")
+
+    def export_best_selling_products(self, start_date: str, end_date: str, top_n: int, user_info: dict):
+        role_name = user_info.get("role_name", "").lower().strip()
+        if role_name not in ["admin", "manager"]:
+            raise BadRequestException("Only admin and manager can export reports")
+
+        if start_date > end_date:
+            raise BadRequestException("Invalid filter time")
+
+        start_dt = f"{start_date} 00:00:00"
+        end_dt = f"{end_date} 23:59:59"
+
+        result = self.db.execute_query(OrderQueries.GET_BEST_SELLING_PRODUCTS, (start_dt, end_dt, top_n))
+        
+        data = []
+        if result:
+            for row in result:
+                data.append({
+                    "Product Name": row[0],
+                    "Unit": row[1],
+                    "Quantity Sold": row[2],
+                    "Total Revenue": float(row[3])
+                })
+        
+        df = pd.DataFrame(data)
+        
+        # Save to buffer
+        buf = io.StringIO()
+        df.to_csv(buf, index=False)
+        buf.seek(0)
+        
+        return StreamingResponse(
+            iter([buf.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=best_selling_products_{start_date}_{end_date}.csv"}
+        )
+

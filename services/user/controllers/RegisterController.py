@@ -48,9 +48,9 @@ class RegisterController:
             raise InvalidDataException("Invalid username")
             
         # Must be a valid phone number
-        if not re.match(r"^\d{10,11}$", phone):
+        if not re.match(r"^0\d{9}$", phone): # Bắt buộc bắt đầu bằng 0 và tổng 10 số
             self.query.close()
-            raise InvalidDataException("Invalid phone number")
+            raise InvalidDataException("Phone number must be 10 digits and start with 0")
         
         res = self.query.check_email_exists(email)
         if res:

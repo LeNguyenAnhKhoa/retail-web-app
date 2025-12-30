@@ -113,3 +113,31 @@ class OrderQueries:
         ORDER BY created_at DESC
         LIMIT 5;
     """
+
+    GET_SALES_REPORT = """
+        SELECT 
+            DATE(created_at) as report_date, 
+            COUNT(order_id) as total_orders, 
+            SUM(total_amount) as total_revenue
+        FROM orders
+        WHERE UPPER(status) = 'COMPLETED' 
+        AND created_at >= %s AND created_at <= %s
+        GROUP BY DATE(created_at)
+        ORDER BY report_date;
+    """
+
+    GET_BEST_SELLING_PRODUCTS = """
+        SELECT 
+            p.name as product_name,
+            p.unit,
+            SUM(od.quantity) as total_sold,
+            SUM(od.quantity * od.unit_price) as total_revenue
+        FROM order_details od
+        JOIN orders o ON od.order_id = o.order_id
+        JOIN products p ON od.product_id = p.product_id
+        WHERE UPPER(o.status) = 'COMPLETED'
+        AND o.created_at >= %s AND o.created_at <= %s
+        GROUP BY p.product_id, p.name, p.unit
+        ORDER BY total_sold DESC
+        LIMIT %s;
+    """

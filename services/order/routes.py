@@ -57,3 +57,22 @@ def get_recent_completed_orders(user_info: dict = Depends(login_required)):
     controller = OrderController()
     response = controller.get_recent_completed_orders(user_info)
     return response
+
+@router.get("/export-sales-report")
+def export_sales_report(
+    start_date: str, 
+    end_date: str, 
+    user_info: dict = Depends(login_required)
+):
+    controller = OrderController()
+    return controller.export_sales_report(start_date, end_date, user_info)
+
+@router.get("/export-best-selling-products")
+def export_best_selling_products(
+    start_date: str, 
+    end_date: str, 
+    top_n: int = 5, 
+    user_info: dict = Depends(login_required)
+):
+    controller = OrderController()
+    return controller.export_best_selling_products(start_date, end_date, top_n, user_info)

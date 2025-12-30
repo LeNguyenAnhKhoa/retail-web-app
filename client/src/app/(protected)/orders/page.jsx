@@ -163,6 +163,94 @@ function OrdersPageContent() {
   // Product search state for each item
   const [productSearchStates, setProductSearchStates] = useState({});
 
+  // Export modal state
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [reportType, setReportType] = useState("sales");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [topN, setTopN] = useState(5);
+  const [minStock, setMinStock] = useState("");
+  const [maxStock, setMaxStock] = useState("");
+
+  const handleExport = async (e) => {
+    e.preventDefault();
+    
+    if (reportType !== "inventory" && startDate > endDate) {
+      setError("Invalid filter time: Start date cannot be after end date");
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    if (reportType === "inventory") {
+      const min = parseInt(minStock);
+      const max = parseInt(maxStock);
+      if (isNaN(min) || isNaN(max)) {
+        setError("Please enter valid Min and Max stock values");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+      if (min >= max) {
+        setError("Min stock must be less than Max stock");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+      if (min < 0 || max < 0) {
+        setError("Stock values must be non-negative");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+    }
+
+    try {
+      const access_token = localStorage.getItem("access_token");
+      let url = "";
+      let filename = "";
+
+      if (reportType === "sales") {
+        url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/order/export-sales-report?start_date=${startDate}&end_date=${endDate}`;
+        filename = `sales_report_${startDate}_${endDate}.png`;
+      } else if (reportType === "products") {
+        url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/order/export-best-selling-products?start_date=${startDate}&end_date=${endDate}&top_n=${topN}`;
+        filename = `best_selling_products_${startDate}_${endDate}.csv`;
+      } else if (reportType === "inventory") {
+        url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/export-inventory-report?min_stock=${minStock}&max_stock=${maxStock}`;
+        filename = `inventory_report_min${minStock}_max${maxStock}.csv`;
+      }
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `${access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.message || "Export failed");
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      setShowExportModal(false);
+    } catch (error) {
+      setError(error.message);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+    }
+  };
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -586,7 +674,7 @@ function OrdersPageContent() {
       )}
       <div className="flex items-center">
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1">
+          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setShowExportModal(true)}>
             <File className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
               Export
@@ -845,6 +933,148 @@ function OrdersPageContent() {
                     <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd"></path>
                   </svg>
                   Create Order
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div
+          id="export-modal"
+          tabIndex={-1}
+          aria-hidden={!showExportModal}
+          className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-black bg-opacity-40"
+        >
+          <div className="relative p-4 w-full max-w-md max-h-full">
+            <div className="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
+              <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Export Report
+                </h3>
+                <button
+                  type="button"
+                  className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                  onClick={() => setShowExportModal(false)}
+                >
+                  <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                  </svg>
+                  <span className="sr-only">Close modal</span>
+                </button>
+              </div>
+              <form className="p-4 md:p-5" onSubmit={handleExport}>
+                <div className="grid gap-4 mb-4">
+                  <div>
+                    <label htmlFor="report-type" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                      Report Type
+                    </label>
+                    <select
+                      id="report-type"
+                      value={reportType}
+                      onChange={(e) => setReportType(e.target.value)}
+                      className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                      required
+                    >
+                      <option value="sales">Sales Report</option>
+                      <option value="products">Best-selling Products Report</option>
+                      <option value="inventory">Inventory Report</option>
+                    </select>
+                  </div>
+                  
+                  {reportType !== "inventory" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="start-date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        id="start-date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="end-date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        id="end-date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                  )}
+
+                  {reportType === "inventory" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="min-stock" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Min Stock
+                      </label>
+                      <input
+                        type="number"
+                        id="min-stock"
+                        min="0"
+                        value={minStock}
+                        onChange={(e) => setMinStock(e.target.value)}
+                        placeholder="e.g. 10"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="max-stock" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Max Stock
+                      </label>
+                      <input
+                        type="number"
+                        id="max-stock"
+                        min="0"
+                        value={maxStock}
+                        onChange={(e) => setMaxStock(e.target.value)}
+                        placeholder="e.g. 100"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                  )}
+
+                  {reportType === "products" && (
+                    <div>
+                      <label htmlFor="top-n" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Top N Products
+                      </label>
+                      <select
+                        id="top-n"
+                        value={topN}
+                        onChange={(e) => setTopN(parseInt(e.target.value))}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                      >
+                        <option value="5">Top 5</option>
+                        <option value="10">Top 10</option>
+                        <option value="20">Top 20</option>
+                        <option value="50">Top 50</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                >
+                  <File className="me-1 -ms-1 w-5 h-5" />
+                  Export
                 </button>
               </form>
             </div>
