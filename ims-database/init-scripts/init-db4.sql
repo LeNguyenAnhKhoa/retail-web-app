@@ -25,12 +25,10 @@ CREATE INDEX idx_order_details_order ON order_details(order_id);
 CREATE INDEX idx_order_details_product ON order_details(product_id);
 
 -- Customers indexes
-CREATE INDEX idx_customers_phone ON customers(phone);
 CREATE INDEX idx_customers_name ON customers(name);
 
 -- Suppliers indexes
 CREATE INDEX idx_suppliers_name ON suppliers(name);
-CREATE INDEX idx_suppliers_phone ON suppliers(phone);
 
 -- Categories indexes
 CREATE INDEX idx_categories_name ON categories(name);
