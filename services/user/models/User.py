@@ -46,6 +46,7 @@ class AdminUpdateUserModel(BaseModel):
     full_name: Optional[str] = Field(None, title="Full Name", description="Full name of the user")
     phone: Optional[str] = Field(None, title="Phone", description="Phone number of the user")
     role: Optional[str] = Field(None, title="Role", description="Role of the user (MANAGER, STAFF, STOCKKEEPER)")
+    image_url: Optional[str] = Field(None, title="Image URL", description="URL of the user's avatar")
 
     class Config:
         from_attributes = True
@@ -55,7 +56,8 @@ class AdminUpdateUserModel(BaseModel):
                 "username": "admin",
                 "full_name": "Nguyễn Văn Admin",
                 "phone": "0901234567",
-                "role": "MANAGER"
+                "role": "MANAGER",
+                "image_url": "https://example.com/avatar.png"
             }
         }
 

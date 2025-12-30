@@ -43,6 +43,10 @@ class UpdateUserQuery:
             fields.append("role = %s")
             params.append(update_user.role)
 
+        if update_user.image_url:
+            fields.append("image_url = %s")
+            params.append(update_user.image_url)
+
         if not fields:
             return True # Nothing to update
 
