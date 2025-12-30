@@ -150,6 +150,20 @@ function OrdersPageContent() {
     cancelled: 0
   });
   const [limit, setLimit] = useState(5);
+  const [userRole, setUserRole] = useState(null);
+
+  // Get user role from localStorage
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setUserRole(userData.role_name || userData.role);
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+  }, []);
 
   // Add order modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -674,12 +688,14 @@ function OrdersPageContent() {
       )}
       <div className="flex items-center">
         <div className="ml-auto flex items-center gap-2">
-          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setShowExportModal(true)}>
-            <File className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Export
-            </span>
-          </Button>
+          {userRole && userRole !== "STAFF" && (
+            <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => setShowExportModal(true)}>
+              <File className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Export
+              </span>
+            </Button>
+          )}
           <Button size="sm" className="h-8 gap-1" onClick={() => setShowAddModal(true)}>
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
