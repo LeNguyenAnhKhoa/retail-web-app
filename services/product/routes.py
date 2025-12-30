@@ -22,6 +22,15 @@ def get_all_products(
     )
     return {"products": response.products}
 
+@router.get("/export-inventory-report")
+def export_inventory_report(
+    min_stock: int = Query(..., description="Minimum stock threshold"),
+    max_stock: int = Query(..., description="Maximum stock threshold"),
+    user_info: dict = Depends(login_required)
+):
+    controller = ExportInventoryReportController()
+    return controller.execute(min_stock, max_stock, user_info)
+
 @router.get("/get-product/{product_id}", response_model=StandardResponse)
 @standard_response
 def get_product(product_id: int, user_info: dict = Depends(login_required)):

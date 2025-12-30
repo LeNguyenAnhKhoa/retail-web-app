@@ -169,15 +169,40 @@ function OrdersPageContent() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [topN, setTopN] = useState(5);
+  const [minStock, setMinStock] = useState("");
+  const [maxStock, setMaxStock] = useState("");
 
   const handleExport = async (e) => {
     e.preventDefault();
     
-    if (startDate > endDate) {
+    if (reportType !== "inventory" && startDate > endDate) {
       setError("Invalid filter time: Start date cannot be after end date");
       setShowAlert(true);
       setTimeout(() => setShowAlert(false), 3000);
       return;
+    }
+
+    if (reportType === "inventory") {
+      const min = parseInt(minStock);
+      const max = parseInt(maxStock);
+      if (isNaN(min) || isNaN(max)) {
+        setError("Please enter valid Min and Max stock values");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+      if (min >= max) {
+        setError("Min stock must be less than Max stock");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
+      if (min < 0 || max < 0) {
+        setError("Stock values must be non-negative");
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+        return;
+      }
     }
 
     try {
@@ -188,9 +213,12 @@ function OrdersPageContent() {
       if (reportType === "sales") {
         url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/order/export-sales-report?start_date=${startDate}&end_date=${endDate}`;
         filename = `sales_report_${startDate}_${endDate}.png`;
-      } else {
+      } else if (reportType === "products") {
         url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/order/export-best-selling-products?start_date=${startDate}&end_date=${endDate}&top_n=${topN}`;
         filename = `best_selling_products_${startDate}_${endDate}.csv`;
+      } else if (reportType === "inventory") {
+        url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/product/export-inventory-report?min_stock=${minStock}&max_stock=${maxStock}`;
+        filename = `inventory_report_min${minStock}_max${maxStock}.csv`;
       }
 
       const response = await fetch(url, {
@@ -952,9 +980,11 @@ function OrdersPageContent() {
                     >
                       <option value="sales">Sales Report</option>
                       <option value="products">Best-selling Products Report</option>
+                      <option value="inventory">Inventory Report</option>
                     </select>
                   </div>
                   
+                  {reportType !== "inventory" && (
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="start-date" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
@@ -983,6 +1013,42 @@ function OrdersPageContent() {
                       />
                     </div>
                   </div>
+                  )}
+
+                  {reportType === "inventory" && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="min-stock" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Min Stock
+                      </label>
+                      <input
+                        type="number"
+                        id="min-stock"
+                        min="0"
+                        value={minStock}
+                        onChange={(e) => setMinStock(e.target.value)}
+                        placeholder="e.g. 10"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="max-stock" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                        Max Stock
+                      </label>
+                      <input
+                        type="number"
+                        id="max-stock"
+                        min="0"
+                        value={maxStock}
+                        onChange={(e) => setMaxStock(e.target.value)}
+                        placeholder="e.g. 100"
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                        required
+                      />
+                    </div>
+                  </div>
+                  )}
 
                   {reportType === "products" && (
                     <div>

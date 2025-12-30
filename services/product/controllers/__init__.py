@@ -9,3 +9,4 @@ from .CountTotalProductsController import CountTotalProductsController
 from .CreateCategoryController import CreateCategoryController
 from .UpdateCategoryController import UpdateCategoryController
 from .DeleteCategoryController import DeleteCategoryController
+from .ExportInventoryReportController import ExportInventoryReportController
