@@ -23,9 +23,14 @@ class UpdateUserByAdminController:
             self.query.close()
             raise InvalidDataException("Invalid username")
             
-        if update_user.phone and (not isinstance(update_user.phone, str) or not re.match(r'^\d{10,11}$', update_user.phone)):
-             self.query.close()
-             raise InvalidDataException("Invalid phone number")
+        if update_user.phone:
+            if not isinstance(update_user.phone, str) or not re.match(r'^0\d{9}$', update_user.phone):
+                 self.query.close()
+                 raise InvalidDataException("Invalid phone number. Must be 10 digits and start with 0.")
+            
+            if self.query.check_phone_exists_exclude_user(update_user.phone, update_user.user_id):
+                 self.query.close()
+                 raise InvalidDataException("Phone number already exists")
 
         res = self.query.update_user_by_id(update_user)
         logger.info(f"Update user by admin: {user_info.get('email')} updated user {update_user.user_id} with data: {update_user}")

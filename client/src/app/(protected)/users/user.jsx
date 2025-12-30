@@ -7,24 +7,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
 import { MoreHorizontal } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export function User({ user, setError, setShowAlert }) {
   const [isActive, setIsActive] = useState(user.is_active);
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const modalRef = useRef();
   const [formData, setFormData] = useState({
     username: user.username,
     full_name: user.full_name,
@@ -38,6 +30,17 @@ export function User({ user, setError, setShowAlert }) {
   };
 
   const handleUpdateUser = async () => {
+    // Validate phone number
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError("Phone number must be 10 digits and start with 0");
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3000);
+      return;
+    }
+
     try {
       const access_token = localStorage.getItem("access_token");
       const response = await fetch(
@@ -226,100 +229,167 @@ export function User({ user, setError, setShowAlert }) {
         )}
       </TableCell>
       <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button aria-haspopup="true" size="icon" variant="ghost">
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-              <div onClick={() => setIsEditSheetOpen(true)} className="w-full cursor-pointer">
-                Edit
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button type="submit" onClick={activateUser} className="w-full text-left">
-                Activate
-              </button>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <button type="submit" onClick={deactivateUser} className="w-full text-left">
-                Deactivate
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {user.role_name !== "MANAGER" && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button aria-haspopup="true" size="icon" variant="ghost">
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <div onClick={() => setIsEditSheetOpen(true)} className="w-full cursor-pointer">
+                  Edit
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <button type="submit" onClick={activateUser} className="w-full text-left">
+                  Activate
+                </button>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <button type="submit" onClick={deactivateUser} className="w-full text-left">
+                  Deactivate
+                </button>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
-        <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Edit User</SheetTitle>
-              <SheetDescription>
-                Make changes to user profile here. Click save when you're done.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="username" className="text-right text-sm font-medium">
-                  Username
-                </label>
-                <Input
-                  id="username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="full_name" className="text-right text-sm font-medium">
-                  Full Name
-                </label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  value={formData.full_name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="phone" className="text-right text-sm font-medium">
-                  Phone
-                </label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <label htmlFor="role" className="text-right text-sm font-medium">
-                  Role
-                </label>
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleInputChange}
-                  className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="MANAGER">MANAGER</option>
-                  <option value="STAFF">STAFF</option>
-                  <option value="STOCKKEEPER">STOCKKEEPER</option>
-                </select>
+        {isEditSheetOpen && (
+          <div
+            id="crud-modal"
+            tabIndex={-1}
+            aria-hidden={!isEditSheetOpen}
+            ref={modalRef}
+            className="overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-black bg-opacity-40"
+          >
+            <div className="relative p-4 w-full max-w-md max-h-full">
+              <div className="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
+                <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Edit User
+                  </h3>
+                  <button
+                    type="button"
+                    className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                    onClick={() => setIsEditSheetOpen(false)}
+                  >
+                    <svg
+                      className="w-3 h-3"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 14 14"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                      />
+                    </svg>
+                    <span className="sr-only">Close modal</span>
+                  </button>
+                </div>
+                <div className="p-4 md:p-5">
+                  <div className="grid gap-4 mb-4 grid-cols-2">
+                    <div className="col-span-2">
+                      <label
+                        htmlFor="username"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        name="username"
+                        id="username"
+                        value={formData.username}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label
+                        htmlFor="full_name"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Full Name
+                      </label>
+                      <input
+                        type="text"
+                        name="full_name"
+                        id="full_name"
+                        value={formData.full_name}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label
+                        htmlFor="phone"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Phone
+                      </label>
+                      <input
+                        type="text"
+                        name="phone"
+                        id="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label
+                        htmlFor="role"
+                        className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                      >
+                        Role
+                      </label>
+                      <select
+                        id="role"
+                        name="role"
+                        value={formData.role}
+                        onChange={handleInputChange}
+                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                      >
+                        <option value="STAFF">STAFF</option>
+                        <option value="STOCKKEEPER">STOCKKEEPER</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleUpdateUser}
+                    className="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                  >
+                    <svg
+                      className="me-1 -ms-1 w-5 h-5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                        clipRule="evenodd"
+                      ></path>
+                    </svg>
+                    Save changes
+                  </button>
+                </div>
               </div>
             </div>
-            <SheetFooter>
-              <Button onClick={handleUpdateUser}>Save changes</Button>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+          </div>
+        )}
       </TableCell>
     </TableRow>
   );
